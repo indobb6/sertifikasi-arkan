@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <!-- Meta Tags untuk PWA (Native App Feel) & Safe Area iOS -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#111827">
+    <meta name="theme-color" content="#111827"> <!-- Warna tema status bar HP (Slate 900) -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -51,6 +51,9 @@
         /* Hide scrollbar on mobile cards area for cleaner look */
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* PWA Safe Area for iOS Notch */
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
     </style>
 </head>
 <body class="text-gray-800 selection:bg-gray-900 selection:text-white relative">
@@ -441,7 +444,7 @@
                             </button>
                             <button onclick="navigate('penilaian')" class="flex-1 flex flex-col items-center justify-center gap-1 w-full h-full relative ${state.view === 'penilaian' ? 'text-gray-900' : 'text-gray-400 hover:text-gray-600'}">
                                 <svg class="w-6 h-6 sm:w-7 sm:h-7 mb-0.5" fill="${state.view === 'penilaian' ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                <span class="text-[11px] font-bold tracking-wide">Input</span>
+                                <span class="text-[10px] font-bold tracking-wide">Input</span>
                             </button>
                             <button onclick="navigate('laporan')" class="flex-1 flex flex-col items-center justify-center gap-1 w-full h-full ${state.view === 'laporan' ? 'text-gray-900' : 'text-gray-400 hover:text-gray-600'}">
                                 <svg class="w-6 h-6 sm:w-7 sm:h-7 mb-0.5" fill="${state.view === 'laporan' ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
@@ -508,6 +511,7 @@
             const remedial = currentDb.filter(d => d.keterangan === 'Remedial').length;
             const belumLulus = currentDb.filter(d => d.keterangan === 'Belum Lulus').length;
 
+            // Hitung Persentase untuk label HTML
             const pctLulus = totalSiswa > 0 ? ((lulus / totalSiswa) * 100).toFixed(1) : 0;
             const pctRemedial = totalSiswa > 0 ? ((remedial / totalSiswa) * 100).toFixed(1) : 0;
             const pctBelumLulus = totalSiswa > 0 ? ((belumLulus / totalSiswa) * 100).toFixed(1) : 0;
@@ -868,7 +872,7 @@
                 id: id || '',
                 nama: nama,
                 kelas: document.getElementById('inputKelas').value,
-                tanggal_lahir: tglLahir,
+                tanggal_lahir: tglLahir, // format kolom supabase
                 umur: document.getElementById('inputUmur').value || null,
                 cita_cita: document.getElementById('inputCitaCita').value.trim(),
                 nama_ayah: document.getElementById('inputAyah').value.trim(),
@@ -962,7 +966,8 @@
                 <div class="no-print flex flex-col md:flex-row justify-between items-start md:items-center mb-4 sm:mb-6 gap-4">
                     <h2 class="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">Daftar Peserta</h2>
                     
-                    <div class="flex items-center gap-2 w-full sm:w-auto justify-center">
+                    <div class="flex items-center gap-2 w-full sm:w-auto justify-center mb-2 sm:mb-0">
+                        <span class="text-xs font-medium text-gray-500 hidden xl:inline">Filter:</span>
                         <select id="filterTahunPendaftar" onchange="updateFilterPendaftar()" class="bg-white border border-gray-200 text-gray-700 text-xs sm:text-sm rounded-lg px-3 py-2 focus:ring-gray-900 outline-none w-1/2 sm:w-auto shadow-sm font-semibold">
                             ${optionsTahun}
                         </select>
@@ -1058,9 +1063,9 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                         <div class="md:col-span-2 p-4 sm:p-5 bg-gray-50 border border-gray-200 rounded-xl relative">
                             <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Cari Data Pendaftar (Wajib)</label>
-                            <div class="flex gap-2 relative">
-                                <input type="text" id="searchInput" onkeyup="tampilkanPreviewPencarian()" autocomplete="off" placeholder="Ketik nama yang dicari..." class="flex-grow px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 text-sm shadow-sm outline-none font-medium">
-                                <button onclick="cariSiswa()" class="bg-gray-900 hover:bg-black text-white px-5 py-3 rounded-lg font-bold shadow-sm transition text-sm shrink-0 whitespace-nowrap">Cari</button>
+                            <div class="flex gap-2 w-full relative">
+                                <input type="text" id="searchInput" onkeyup="tampilkanPreviewPencarian()" autocomplete="off" placeholder="Ketik nama yang dicari..." class="flex-1 w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 text-sm shadow-sm outline-none font-medium">
+                                <button onclick="cariSiswa()" class="flex-none w-20 sm:w-24 px-0 bg-gray-900 hover:bg-black text-white py-3 rounded-lg font-bold shadow-sm transition text-sm text-center">Cari</button>
                             </div>
                             <div id="searchDropdown" class="absolute left-4 right-4 mt-2 bg-white border border-gray-200 rounded-xl shadow-xl hidden max-h-48 overflow-y-auto z-50"></div>
                             <div id="searchResult" class="mt-2 text-xs font-bold text-red-500 hidden"></div>
@@ -1562,19 +1567,21 @@
             let textColorKeterangan = d.keterangan === 'Lulus' ? 'text-green-700' : d.keterangan === 'Remedial' ? 'text-amber-600' : d.keterangan === 'Belum Lulus' ? 'text-red-600' : 'text-gray-800';
 
             return `
-                <div class="no-print p-3 sm:p-5 bg-gray-900 flex flex-col sm:flex-row justify-between items-center text-white sticky top-0 z-50 shadow-lg gap-4">
-                    <button onclick="navigate('${state.role === 'pengunjung' ? 'dashboard' : 'laporan'}')" class="w-full sm:w-auto px-4 py-2.5 bg-gray-800 hover:bg-gray-700 rounded-xl text-sm font-bold transition flex justify-center items-center gap-2 border border-gray-700">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg> 
-                        ${state.role === 'pengunjung' ? 'Kembali' : 'Ke Laporan'}
-                    </button>
-                    <div class="font-bold text-sm hidden sm:block tracking-widest uppercase text-gray-400">Mode Pratinjau Cetak</div>
-                    <div class="flex gap-2 w-full sm:w-auto">
-                        <button onclick="exportExcelIndividu()" class="flex-1 sm:flex-none px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 rounded-xl font-bold text-sm shadow transition flex justify-center items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> Excel
+                <div class="no-print bg-gray-900 sticky top-0 z-50 shadow-lg pt-[env(safe-area-inset-top)]">
+                    <div class="p-3 sm:p-5 flex flex-col sm:flex-row justify-between items-center text-white gap-4">
+                        <button onclick="navigate('${state.role === 'pengunjung' ? 'dashboard' : 'laporan'}')" class="w-full sm:w-auto px-4 py-2.5 bg-gray-800 hover:bg-gray-700 rounded-xl text-sm font-bold transition flex justify-center items-center gap-2 border border-gray-700">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg> 
+                            ${state.role === 'pengunjung' ? 'Kembali' : 'Ke Laporan'}
                         </button>
-                        <button onclick="window.print()" class="flex-1 sm:flex-none px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 rounded-xl font-bold text-sm shadow transition flex justify-center items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg> Cetak PDF
-                        </button>
+                        <div class="font-bold text-sm hidden sm:block tracking-widest uppercase text-gray-400">Mode Pratinjau Cetak</div>
+                        <div class="flex gap-2 w-full sm:w-auto">
+                            <button onclick="exportExcelIndividu()" class="flex-1 sm:flex-none px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 rounded-xl font-bold text-sm shadow transition flex justify-center items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> Excel
+                            </button>
+                            <button onclick="window.print()" class="flex-1 sm:flex-none px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 rounded-xl font-bold text-sm shadow transition flex justify-center items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg> Cetak PDF
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -1715,29 +1722,31 @@
             let optionsTahun = tahunAjaranList.map(t => `<option value="${t}" ${tahunAjaran === t ? 'selected' : ''}>${t}</option>`).join('');
 
             return `
-                <div class="no-print p-3 sm:p-5 bg-gray-900 flex flex-col md:flex-row justify-between items-start md:items-center text-white sticky top-0 z-50 shadow-lg gap-4">
-                    <button onclick="navigate('laporan'); state.filterCetak = null;" class="w-full md:w-auto px-4 py-2.5 bg-gray-800 hover:bg-gray-700 rounded-xl text-sm font-bold transition border border-gray-700 flex items-center justify-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg> Kembali
-                    </button>
-                    
-                    <div class="flex items-center gap-2 w-full md:w-auto justify-center">
-                        <span class="text-[11px] font-bold text-gray-400 uppercase tracking-widest hidden md:inline">Filter Data:</span>
-                        <select id="printFilterTahun" onchange="updateFilterCetak()" class="bg-gray-800 border border-gray-700 text-white text-sm font-medium rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-white outline-none w-1/2 sm:w-auto">
-                            ${optionsTahun}
-                        </select>
-                        <select id="printFilterSemester" onchange="updateFilterCetak()" class="bg-gray-800 border border-gray-700 text-white text-sm font-medium rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-white outline-none w-1/2 sm:w-auto">
-                            <option value="1" ${semester == '1' ? 'selected' : ''}>Semester 1</option>
-                            <option value="2" ${semester == '2' ? 'selected' : ''}>Semester 2</option>
-                        </select>
-                    </div>
+                <div class="no-print bg-gray-900 sticky top-0 z-50 shadow-lg pt-[env(safe-area-inset-top)]">
+                    <div class="p-3 sm:p-5 flex flex-col md:flex-row justify-between items-start md:items-center text-white gap-4">
+                        <button onclick="navigate('laporan'); state.filterCetak = null;" class="w-full md:w-auto px-4 py-2.5 bg-gray-800 hover:bg-gray-700 rounded-xl text-sm font-bold transition border border-gray-700 flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg> Kembali
+                        </button>
+                        
+                        <div class="flex items-center gap-2 w-full md:w-auto justify-center">
+                            <span class="text-[11px] font-bold text-gray-400 uppercase tracking-widest hidden md:inline">Filter Data:</span>
+                            <select id="printFilterTahun" onchange="updateFilterCetak()" class="bg-gray-800 border border-gray-700 text-white text-sm font-medium rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-white outline-none w-1/2 sm:w-auto">
+                                ${optionsTahun}
+                            </select>
+                            <select id="printFilterSemester" onchange="updateFilterCetak()" class="bg-gray-800 border border-gray-700 text-white text-sm font-medium rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-white outline-none w-1/2 sm:w-auto">
+                                <option value="1" ${semester == '1' ? 'selected' : ''}>Semester 1</option>
+                                <option value="2" ${semester == '2' ? 'selected' : ''}>Semester 2</option>
+                            </select>
+                        </div>
 
-                    <div class="flex gap-2 w-full md:w-auto">
-                        <button onclick="exportExcelSemua()" class="flex-1 sm:flex-none px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 rounded-xl font-bold text-sm shadow transition flex justify-center items-center gap-2">
-                            <svg class="w-4 h-4 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> Excel
-                        </button>
-                        <button onclick="window.print()" class="flex-1 sm:flex-none px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 rounded-xl font-bold text-sm shadow transition flex justify-center items-center gap-2">
-                            <svg class="w-4 h-4 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg> Cetak PDF
-                        </button>
+                        <div class="flex gap-2 w-full md:w-auto">
+                            <button onclick="exportExcelSemua()" class="flex-1 sm:flex-none px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 rounded-xl font-bold text-sm shadow transition flex justify-center items-center gap-2">
+                                <svg class="w-4 h-4 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> Excel
+                            </button>
+                            <button onclick="window.print()" class="flex-1 sm:flex-none px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 rounded-xl font-bold text-sm shadow transition flex justify-center items-center gap-2">
+                                <svg class="w-4 h-4 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg> Cetak PDF
+                            </button>
+                        </div>
                     </div>
                 </div>
 
