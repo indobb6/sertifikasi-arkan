@@ -40,6 +40,10 @@
             table { border-collapse: collapse; width: 100%; }
             th, td { border: 1px solid black !important; padding: 8px; text-align: left; font-size: 12px; }
             th { background-color: #f3f4f6 !important; -webkit-print-color-adjust: exact; }
+            
+            /* Paksa Landscape untuk Haflah */
+            @page { size: landscape; margin: 1cm; }
+            .landscape-print { width: 100%; }
         }
         .print-only { display: none; }
         
@@ -97,6 +101,7 @@
             currentStudent: null,
             filterCetak: null, 
             filterPendaftar: null,
+            filterHaflah: null, // State untuk menyimpan filter tahun Haflah
             namaPenguji: null,
             username: null,
             sortLaporan: 'terbaru',
@@ -129,6 +134,45 @@
                 toast.classList.add('-translate-y-24', 'opacity-0');
                 setTimeout(() => toast.remove(), 300);
             }, 3500);
+        }
+
+        // Custom Confirm Dialog for Delete
+        function showConfirmDialog(title, message, onConfirm) {
+            const dialog = document.createElement('div');
+            dialog.className = 'fixed inset-0 z-[150] flex items-center justify-center p-4 bg-gray-900 bg-opacity-50 backdrop-blur-sm transition-opacity opacity-0';
+            dialog.innerHTML = `
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden transform scale-95 transition-transform duration-300">
+                    <div class="p-6">
+                        <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4 text-red-600">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-gray-900 mb-2">${title}</h3>
+                        <p class="text-sm text-gray-500">${message}</p>
+                    </div>
+                    <div class="px-6 py-4 bg-gray-50 flex gap-3 justify-end">
+                        <button id="btnCancelDialog" class="px-4 py-2 bg-white border border-gray-300 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-50 transition">Batal</button>
+                        <button id="btnConfirmDialog" class="px-4 py-2 bg-red-600 rounded-xl text-sm font-bold text-white hover:bg-red-700 transition shadow-sm">Ya, Hapus</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(dialog);
+            
+            setTimeout(() => {
+                dialog.classList.remove('opacity-0');
+                dialog.querySelector('div').classList.remove('scale-95');
+            }, 10);
+
+            const closeDialog = () => {
+                dialog.classList.add('opacity-0');
+                dialog.querySelector('div').classList.add('scale-95');
+                setTimeout(() => dialog.remove(), 300);
+            };
+
+            document.getElementById('btnCancelDialog').onclick = closeDialog;
+            document.getElementById('btnConfirmDialog').onclick = () => {
+                closeDialog();
+                onConfirm();
+            };
         }
 
         // --- SUPABASE BACKEND INTEGRATION ---
@@ -280,14 +324,15 @@
                     showToast("Data berhasil disimpan!");
                     
                     await server.init();
-                    if(state.view !== 'laporan') navigate(viewToNavigate || 'laporan');
+                    if(state.view !== 'laporan' && state.view !== 'dataPendaftar') navigate(viewToNavigate);
+                    else navigate(state.view);
                 } catch (error) {
                     showToast("Gagal menyimpan data! Error: " + error.message, "error");
                     navigate(viewToNavigate || 'dashboard');
                 }
             },
 
-            deleteData: async (id) => {
+            deleteData: async (id, sourceView = 'laporan') => {
                 app.innerHTML = '<div class="h-screen flex flex-col items-center justify-center p-6 text-center"><div class="w-12 h-12 border-4 border-red-500 border-t-transparent rounded-full animate-spin mb-4"></div><div class="text-lg font-bold text-red-600">Menghapus Data...</div></div>';
                 try {
                     const { error } = await supabaseClient
@@ -299,10 +344,10 @@
                     
                     showToast("Data berhasil dihapus.", "success");
                     await server.init();
-                    if(state.view !== 'laporan') navigate('laporan');
+                    navigate(sourceView);
                 } catch (error) {
                     showToast("Gagal menghapus data! Error: " + error.message, "error");
-                    navigate('laporan');
+                    navigate(sourceView);
                 }
             }
         };
@@ -324,6 +369,20 @@
             } catch (e) {
                 return dateObjOrString ? dateObjOrString.toString().trim() : "";
             }
+        }
+
+        // Fungsi Filter Global
+        function updateFilterCetak() {
+            state.filterCetak = {
+                tahunAjaran: document.getElementById('printFilterTahun').value,
+                semester: document.getElementById('printFilterSemester').value
+            };
+            render();
+        }
+
+        function updateFilterHaflah() {
+            state.filterHaflah = document.getElementById('filterTahunHaflah').value;
+            render();
         }
 
         // Sistem Navigasi Pintar yang Mengingat Halaman
@@ -394,8 +453,8 @@
             
             // pt-[env(safe-area-inset-top)] mengatasi masalah notch dan indikator baterai pada iOS
             return `
-                <div class="min-h-screen flex flex-col bg-gray-50 no-print">
-                    <header class="bg-gray-900 text-white shadow-md sticky top-0 z-40 pt-[env(safe-area-inset-top)]">
+                <div class="min-h-screen flex flex-col bg-gray-50 print:bg-white">
+                    <header class="bg-gray-900 text-white shadow-md sticky top-0 z-40 pt-[env(safe-area-inset-top)] no-print">
                         <div class="max-w-7xl mx-auto px-4 sm:px-6">
                             <div class="flex justify-between items-center h-14 sm:h-16">
                                 <div class="flex items-center gap-3">
@@ -409,6 +468,9 @@
                                         <button onclick="navigate('pendaftaran')" class="px-2.5 py-2 rounded-lg text-sm font-medium ${state.view === 'pendaftaran' || state.view === 'dataPendaftar' ? 'bg-gray-700 text-white shadow-inner' : 'text-gray-300 hover:bg-gray-800 transition'}">Pendaftaran</button>
                                         <button onclick="navigate('penilaian')" class="px-2.5 py-2 rounded-lg text-sm font-medium ${state.view === 'penilaian' ? 'bg-gray-700 text-white shadow-inner' : 'text-gray-300 hover:bg-gray-800 transition'}">Penilaian</button>
                                         <button onclick="navigate('laporan')" class="px-2.5 py-2 rounded-lg text-sm font-medium ${state.view === 'laporan' ? 'bg-gray-700 text-white shadow-inner' : 'text-gray-300 hover:bg-gray-800 transition'}">Hasil Sertifikasi</button>
+                                        <button onclick="navigate('haflah')" class="px-2.5 py-2 rounded-lg text-sm font-medium flex items-center gap-1.5 ${state.view === 'haflah' ? 'bg-indigo-600 text-white shadow-inner' : 'text-gray-300 hover:bg-gray-800 transition'}">
+                                            <svg class="w-4 h-4 text-amber-300" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg> Haflah
+                                        </button>
                                         ` : ''}
                                     </div>
                                 </div>
@@ -425,30 +487,34 @@
                         </div>
                     </header>
 
-                    <main class="flex-grow w-full max-w-7xl mx-auto p-4 sm:p-6 pb-24 md:pb-8">
+                    <main class="flex-grow w-full max-w-7xl mx-auto p-4 sm:p-6 pb-24 md:pb-8 print:p-0 print:m-0">
                         ${content}
                     </main>
 
                     <!-- pb-[env...] menjaga navbar agar tidak terpotong oleh home indicator di iPhone -->
-                    <nav class="md:hidden fixed bottom-0 w-full bg-white border-t border-gray-200 z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.03)] pb-[env(safe-area-inset-bottom)]">
-                        <div class="flex justify-around items-center h-[72px] pb-1">
+                    <nav class="md:hidden fixed bottom-0 w-full bg-white border-t border-gray-200 z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.03)] pb-[env(safe-area-inset-bottom)] no-print">
+                        <div class="flex justify-around items-center h-[72px] pb-1 px-1">
                             <button onclick="navigate('dashboard')" class="flex-1 flex flex-col items-center justify-center gap-1 w-full h-full ${state.view === 'dashboard' ? 'text-gray-900' : 'text-gray-400 hover:text-gray-600'}">
                                 <svg class="w-6 h-6 sm:w-7 sm:h-7 mb-0.5" fill="${state.view === 'dashboard' ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                                <span class="text-[11px] font-bold tracking-wide">${isAdminOrPenguji ? 'Beranda' : 'Cek Hasil'}</span>
+                                <span class="text-[10px] font-bold tracking-wide leading-none">${isAdminOrPenguji ? 'Beranda' : 'Cek Hasil'}</span>
                             </button>
                             
                             ${isAdminOrPenguji ? `
                             <button onclick="navigate('pendaftaran')" class="flex-1 flex flex-col items-center justify-center gap-1 w-full h-full relative ${state.view === 'pendaftaran' || state.view === 'dataPendaftar' ? 'text-gray-900' : 'text-gray-400 hover:text-gray-600'}">
                                 <svg class="w-6 h-6 sm:w-7 sm:h-7 mb-0.5" fill="${state.view === 'pendaftaran' ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
-                                <span class="text-[11px] font-bold tracking-wide">Daftar</span>
+                                <span class="text-[10px] font-bold tracking-wide leading-none">Daftar</span>
                             </button>
                             <button onclick="navigate('penilaian')" class="flex-1 flex flex-col items-center justify-center gap-1 w-full h-full relative ${state.view === 'penilaian' ? 'text-gray-900' : 'text-gray-400 hover:text-gray-600'}">
                                 <svg class="w-6 h-6 sm:w-7 sm:h-7 mb-0.5" fill="${state.view === 'penilaian' ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                <span class="text-[10px] font-bold tracking-wide">Input</span>
+                                <span class="text-[10px] font-bold tracking-wide leading-none">Input</span>
                             </button>
                             <button onclick="navigate('laporan')" class="flex-1 flex flex-col items-center justify-center gap-1 w-full h-full ${state.view === 'laporan' ? 'text-gray-900' : 'text-gray-400 hover:text-gray-600'}">
                                 <svg class="w-6 h-6 sm:w-7 sm:h-7 mb-0.5" fill="${state.view === 'laporan' ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                <span class="text-[11px] font-bold tracking-wide">Hasil</span>
+                                <span class="text-[10px] font-bold tracking-wide leading-none">Hasil</span>
+                            </button>
+                            <button onclick="navigate('haflah')" class="flex-1 flex flex-col items-center justify-center gap-1 w-full h-full relative ${state.view === 'haflah' ? 'text-indigo-600' : 'text-gray-400 hover:text-gray-600'}">
+                                <svg class="w-6 h-6 sm:w-7 sm:h-7 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
+                                <span class="text-[10px] font-bold tracking-wide leading-none">Haflah</span>
                             </button>
                             ` : ''}
                         </div>
@@ -511,7 +577,6 @@
             const remedial = currentDb.filter(d => d.keterangan === 'Remedial').length;
             const belumLulus = currentDb.filter(d => d.keterangan === 'Belum Lulus').length;
 
-            // Hitung Persentase untuk label HTML
             const pctLulus = totalSiswa > 0 ? ((lulus / totalSiswa) * 100).toFixed(1) : 0;
             const pctRemedial = totalSiswa > 0 ? ((remedial / totalSiswa) * 100).toFixed(1) : 0;
             const pctBelumLulus = totalSiswa > 0 ? ((belumLulus / totalSiswa) * 100).toFixed(1) : 0;
@@ -623,7 +688,7 @@
                             <svg class="w-6 h-6 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                         </div>
                         <div>
-                            <h3 class="text-base sm:text-lg font-bold text-gray-900">Data & Laporan</h3>
+                            <h3 class="text-base sm:text-lg font-bold text-gray-900">Hasil Sertifikasi</h3>
                             <p class="text-xs sm:text-sm text-gray-500 mt-1 font-medium">Lihat database dan export ke Excel/PDF.</p>
                         </div>
                     </div>
@@ -773,7 +838,7 @@
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Reset
                         </button>
                         <button onclick="navigate('dataPendaftar')" class="flex-1 sm:flex-none bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200 px-4 py-2 rounded-xl text-sm font-bold transition">Lihat Data</button>
-                        ${isEdit ? `<button onclick="navigate('pendaftaran', null)" class="flex-1 sm:flex-none bg-gray-900 text-white px-4 py-2 rounded-xl text-sm font-bold transition">Batal Edit</button>` : ''}
+                        ${isEdit ? `<button onclick="resetFormPendaftaran()" class="flex-1 sm:flex-none bg-gray-900 text-white px-4 py-2 rounded-xl text-sm font-bold transition">Batal Edit</button>` : ''}
                     </div>
                 </div>
 
@@ -856,7 +921,17 @@
             `);
         }
 
-        function resetFormPendaftaran() { state.currentStudent = null; navigate('pendaftaran'); }
+        function resetFormPendaftaran() { 
+            state.currentStudent = null; 
+            if(document.getElementById('inputNama')) document.getElementById('inputNama').value = '';
+            if(document.getElementById('inputTglLahir')) document.getElementById('inputTglLahir').value = '';
+            if(document.getElementById('inputUmur')) document.getElementById('inputUmur').value = '';
+            if(document.getElementById('inputCitaCita')) document.getElementById('inputCitaCita').value = '';
+            if(document.getElementById('inputAyah')) document.getElementById('inputAyah').value = '';
+            if(document.getElementById('inputIbu')) document.getElementById('inputIbu').value = '';
+            if(document.getElementById('inputId')) document.getElementById('inputId').value = '';
+            navigate('pendaftaran'); 
+        }
 
         function simpanPendaftaran() {
             const id = document.getElementById('inputId').value;
@@ -954,7 +1029,8 @@
                             <td class="px-4 py-3.5 text-sm text-gray-600 border-r print:border-black font-medium">${d.pengampu}</td>
                             <td class="px-4 py-3.5 text-sm text-center no-print">
                                 ${(state.role === 'admin' || d.pengampu === state.namaPenguji || d.penguji === state.namaPenguji) ? `
-                                    <button onclick="navigate('pendaftaran', state.db.find(x => x.id === '${d.id}'))" class="bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-900 hover:text-white px-3 py-1.5 rounded-lg font-bold text-xs transition">Edit</button>
+                                    <button onclick="navigate('pendaftaran', state.db.find(x => x.id === '${d.id}'))" class="bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-900 hover:text-white px-3 py-1.5 rounded-lg font-bold text-xs transition mb-1 sm:mb-0">Edit</button>
+                                    <button onclick="hapusData('${d.id}', 'dataPendaftar')" class="bg-red-50 text-red-600 border border-red-100 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded-lg font-bold text-xs transition mt-1 sm:mt-0 sm:ml-1">Hapus</button>
                                 ` : '-'}
                             </td>
                         </tr>
@@ -967,7 +1043,6 @@
                     <h2 class="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">Daftar Peserta</h2>
                     
                     <div class="flex items-center gap-2 w-full sm:w-auto justify-center mb-2 sm:mb-0">
-                        <span class="text-xs font-medium text-gray-500 hidden xl:inline">Filter:</span>
                         <select id="filterTahunPendaftar" onchange="updateFilterPendaftar()" class="bg-white border border-gray-200 text-gray-700 text-xs sm:text-sm rounded-lg px-3 py-2 focus:ring-gray-900 outline-none w-1/2 sm:w-auto shadow-sm font-semibold">
                             ${optionsTahun}
                         </select>
@@ -1263,6 +1338,12 @@
         function resetFormPenilaian() {
             state.currentStudent = null;
             localStorage.removeItem('draftPenilaian_Arkan');
+            if(document.getElementById('searchInput')) document.getElementById('searchInput').value = '';
+            if(document.getElementById('inputNama')) document.getElementById('inputNama').value = '';
+            if(document.getElementById('inputKelas')) document.getElementById('inputKelas').value = '';
+            if(document.getElementById('inputCatatan')) document.getElementById('inputCatatan').value = '';
+            if(document.getElementById('inputId')) document.getElementById('inputId').value = '';
+            document.querySelectorAll('.surah-input').forEach(el => el.value = '');
             navigate('penilaian');
         }
 
@@ -1380,7 +1461,7 @@
                                     <button onclick="bukaCetak('${d.id}')" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 p-2 rounded-lg transition" title="Cetak/Excel"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg></button>
                                     ${(state.role === 'admin' || (state.role === 'penguji' && (!d.penguji || d.penguji === state.namaPenguji))) ? `
                                         <button onclick="bukaEdit('${d.id}')" class="bg-gray-100 text-gray-700 hover:bg-gray-900 hover:text-white p-2 rounded-lg transition" title="Edit Nilai"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
-                                        <button onclick="hapusData('${d.id}')" class="bg-red-50 text-red-600 hover:bg-red-100 p-2 rounded-lg transition" title="Hapus"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                                        <button onclick="hapusData('${d.id}', 'laporan')" class="bg-red-50 text-red-600 hover:bg-red-100 p-2 rounded-lg transition" title="Hapus"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
                                     ` : ''}
                                 </div>
                             </td>
@@ -1406,7 +1487,7 @@
                                         <button onclick="bukaCetak('${d.id}')" class="bg-indigo-50 text-indigo-600 active:bg-indigo-100 p-2.5 rounded-xl transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg></button>
                                         ${(state.role === 'admin' || (state.role === 'penguji' && (!d.penguji || d.penguji === state.namaPenguji))) ? `
                                             <button onclick="bukaEdit('${d.id}')" class="bg-gray-100 text-gray-700 active:bg-gray-200 p-2.5 rounded-xl transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
-                                            <button onclick="hapusData('${d.id}')" class="bg-red-50 text-red-600 active:bg-red-100 p-2.5 rounded-xl transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                                            <button onclick="hapusData('${d.id}', 'laporan')" class="bg-red-50 text-red-600 active:bg-red-100 p-2.5 rounded-xl transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
                                         ` : ''}
                                     </div>
                                 </div>
@@ -1420,7 +1501,7 @@
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                     <div class="p-5 sm:p-6 border-b border-gray-100 bg-gray-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div class="flex flex-col sm:flex-row sm:items-center gap-3 w-full md:w-auto">
-                            <h2 class="text-xl font-bold text-gray-900 tracking-tight whitespace-nowrap">Hasil Penilaian</h2>
+                            <h2 class="text-xl font-bold text-gray-900 tracking-tight whitespace-nowrap">Hasil Sertifikasi</h2>
                             <button onclick="navigate('cetakSemua')" class="w-full sm:w-auto justify-center bg-gray-900 hover:bg-black text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition flex items-center gap-2">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                                 Cetak PDF
@@ -1509,15 +1590,19 @@
             }
         }
 
-        function hapusData(id) {
+        function hapusData(id, sourceView = 'laporan') {
             const data = state.db.find(d => d.id === id);
-            if (state.role === 'penguji' && data && data.penguji && data.penguji !== state.namaPenguji) {
+            if (!data) return;
+            if (state.role === 'penguji' && data.penguji && data.penguji !== state.namaPenguji) {
                 showToast('Akses Ditolak: Anda hanya dapat menghapus data yang Anda input sendiri.', 'error');
                 return;
             }
-            if(confirm('Yakin ingin menghapus data ini secara permanen?')) {
-                server.deleteData(id);
-            }
+            
+            showConfirmDialog(
+                'Hapus Data Peserta', 
+                `Yakin ingin menghapus data <b>${data.nama}</b> secara permanen? Data yang dihapus tidak dapat dikembalikan.`, 
+                () => { server.deleteData(id, sourceView); }
+            );
         }
 
         function exportExcelIndividu() {
@@ -1786,6 +1871,131 @@
             `;
         }
 
+        // --- HAFLAH FUNCTIONS ---
+        function exportExcelHaflah() {
+            const tahunAjaran = state.filterHaflah || getCurrentPeriod().tahunAjaran;
+            
+            let filteredDb = state.db.filter(d => 
+                d.tahunAjaran === tahunAjaran && 
+                (d.keterangan === 'Lulus' || d.keterangan === 'Remedial')
+            );
+
+            filteredDb.sort((a, b) => {
+                if (parseInt(b.juz) !== parseInt(a.juz)) return parseInt(b.juz) - parseInt(a.juz);
+                if (String(a.kelas) !== String(b.kelas)) return String(a.kelas).localeCompare(String(b.kelas), undefined, {numeric: true});
+                return String(a.nama).localeCompare(String(b.nama));
+            });
+
+            const ws_data = filteredDb.map((d, i) => ({
+                "No": i + 1,
+                "Nama Lengkap": d.nama,
+                "Kelas": d.kelas,
+                "Juz": d.juz,
+                "Rata-rata": d.rataRata,
+                "Nama Ayah": d.namaAyah,
+                "Nama Ibu": d.namaIbu,
+                "Cita-Cita": d.citaCita,
+                "Keterangan": d.keterangan
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(ws_data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Peserta Haflah");
+            XLSX.writeFile(wb, `Data_Peserta_Haflah_${tahunAjaran.replace('/','-')}.xlsx`);
+        }
+
+        function viewHaflah() {
+            if (state.role !== 'admin' && state.role !== 'penguji') return navigate('dashboard');
+
+            if (!state.filterHaflah) {
+                state.filterHaflah = getCurrentPeriod().tahunAjaran;
+            }
+            const tahunAjaran = state.filterHaflah;
+
+            // Filter gabungan semester 1 & 2 untuk tahun ajaran yang dipilih
+            let filteredDb = state.db.filter(d => 
+                d.tahunAjaran === tahunAjaran && 
+                (d.keterangan === 'Lulus' || d.keterangan === 'Remedial')
+            );
+
+            // Sort: Juz (Desc) -> Kelas -> Nama (Asc)
+            filteredDb.sort((a, b) => {
+                if (parseInt(b.juz) !== parseInt(a.juz)) return parseInt(b.juz) - parseInt(a.juz);
+                if (String(a.kelas) !== String(b.kelas)) return String(a.kelas).localeCompare(String(b.kelas), undefined, {numeric: true});
+                return String(a.nama).localeCompare(String(b.nama));
+            });
+
+            let optionsTahun = tahunAjaranList.map(t => `<option value="${t}" ${tahunAjaran === t ? 'selected' : ''}>${t}</option>`).join('');
+
+            let trs = '';
+            if(filteredDb.length === 0) {
+                trs = `<tr><td colspan="8" class="px-4 py-10 text-center text-gray-500 font-medium italic">Belum ada data peserta Haflah untuk Tahun Ajaran ini.</td></tr>`;
+            } else {
+                filteredDb.forEach((d, index) => {
+                    trs += `
+                        <tr class="hover:bg-gray-50 border-b border-gray-100 transition print:border-black">
+                            <td class="px-4 py-3.5 text-sm text-gray-500 text-center print:border print:border-black print:text-black">${index + 1}</td>
+                            <td class="px-4 py-3.5 text-sm font-bold text-gray-900 print:border print:border-black print:text-black">${d.nama}</td>
+                            <td class="px-4 py-3.5 text-sm text-gray-600 text-center print:border print:border-black print:text-black">${d.kelas}</td>
+                            <td class="px-4 py-3.5 text-sm font-bold text-gray-600 text-center print:border print:border-black print:text-black">${d.juz}</td>
+                            <td class="px-4 py-3.5 text-sm font-black text-center text-gray-900 print:border print:border-black print:text-black">${d.rataRata}</td>
+                            <td class="px-4 py-3.5 text-sm text-gray-600 print:border print:border-black print:text-black">${d.namaAyah}</td>
+                            <td class="px-4 py-3.5 text-sm text-gray-600 print:border print:border-black print:text-black">${d.namaIbu}</td>
+                            <td class="px-4 py-3.5 text-sm text-gray-600 print:border print:border-black print:text-black">${d.citaCita}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            return `
+                <div class="no-print p-3 sm:p-5 bg-gray-900 flex flex-col md:flex-row justify-between items-start md:items-center text-white sticky top-0 z-50 shadow-lg gap-4 pt-[env(safe-area-inset-top)]">
+                    <button onclick="navigate('dashboard')" class="w-full md:w-auto px-4 py-2.5 bg-gray-800 hover:bg-gray-700 rounded-xl text-sm font-bold transition border border-gray-700 flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg> Dashboard
+                    </button>
+                    
+                    <div class="flex items-center gap-2 w-full md:w-auto justify-center">
+                        <span class="text-[11px] font-bold text-gray-400 uppercase tracking-widest hidden md:inline">Tahun Ajaran:</span>
+                        <select id="filterTahunHaflah" onchange="updateFilterHaflah()" class="bg-gray-800 border border-gray-700 text-white text-sm font-medium rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-white outline-none w-full sm:w-auto">
+                            ${optionsTahun}
+                        </select>
+                    </div>
+
+                    <div class="flex gap-2 w-full md:w-auto">
+                        <button onclick="exportExcelHaflah()" class="flex-1 sm:flex-none px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 rounded-xl font-bold text-sm shadow transition flex justify-center items-center gap-2">
+                            <svg class="w-4 h-4 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> Excel
+                        </button>
+                        <button onclick="window.print()" class="flex-1 sm:flex-none px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 rounded-xl font-bold text-sm shadow transition flex justify-center items-center gap-2">
+                            <svg class="w-4 h-4 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg> Cetak PDF
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white p-0 sm:p-6 rounded-2xl shadow-sm border border-gray-100 print-container overflow-hidden landscape-print">
+                    <h1 class="print-only text-2xl font-bold text-center mt-4 mb-2 uppercase tracking-wide">Daftar Peserta Haflah Akhirussanah</h1>
+                    <h3 class="print-only text-md text-center mb-6 font-semibold">Tahun Ajaran ${tahunAjaran}</h3>
+                    <div class="overflow-x-auto hide-scrollbar">
+                        <table class="w-full text-left border-collapse border-t border-gray-100 print:border-black print:border-2">
+                            <thead class="bg-gray-50 print:bg-gray-200">
+                                <tr>
+                                    <th class="px-4 py-3.5 text-[11px] font-bold text-gray-400 uppercase tracking-widest text-center border-r border-b print:border-black print:text-black">No</th>
+                                    <th class="px-4 py-3.5 text-[11px] font-bold text-gray-400 uppercase tracking-widest border-r border-b print:border-black print:text-black">Nama Lengkap</th>
+                                    <th class="px-4 py-3.5 text-[11px] font-bold text-gray-400 uppercase tracking-widest text-center border-r border-b print:border-black print:text-black">Kelas</th>
+                                    <th class="px-4 py-3.5 text-[11px] font-bold text-gray-400 uppercase tracking-widest text-center border-r border-b print:border-black print:text-black">Juz</th>
+                                    <th class="px-4 py-3.5 text-[11px] font-bold text-gray-400 uppercase tracking-widest text-center border-r border-b print:border-black print:text-black">Nilai</th>
+                                    <th class="px-4 py-3.5 text-[11px] font-bold text-gray-400 uppercase tracking-widest border-r border-b print:border-black print:text-black">Nama Ayah</th>
+                                    <th class="px-4 py-3.5 text-[11px] font-bold text-gray-400 uppercase tracking-widest border-r border-b print:border-black print:text-black">Nama Ibu</th>
+                                    <th class="px-4 py-3.5 text-[11px] font-bold text-gray-400 uppercase tracking-widest border-b print:border-black print:text-black">Cita-Cita</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 print:divide-black">
+                                ${trs}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
         function viewProfil() {
             if (state.role !== 'admin' && state.role !== 'penguji') {
                 return renderLayout(`<div class="text-center py-20 text-red-500 font-bold">Akses Ditolak.</div>`);
@@ -1825,7 +2035,7 @@
                         
                         <div class="pt-4 flex gap-3 justify-end">
                             <button onclick="navigate('dashboard')" class="px-4 sm:px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-xl text-sm font-bold hover:bg-gray-50 transition w-1/3 sm:w-auto text-center">Batal</button>
-                            <button id="btnUpdateProfil" onclick="submitProfil()" class="px-5 sm:px-6 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-bold shadow-md hover:bg-emerald-700 transition w-2/3 sm:w-auto text-center">Simpan Perubahan</button>
+                            <button id="btnUpdateProfil" onclick="submitProfil()" class="px-5 sm:px-6 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-bold shadow-md hover:bg-black transition w-2/3 sm:w-auto text-center">Simpan Perubahan</button>
                         </div>
                     </div>
                 </div>
@@ -1864,6 +2074,7 @@
                     case 'dataPendaftar': html = viewDataPendaftar(); break;
                     case 'penilaian': html = viewPenilaian(); break;
                     case 'laporan': html = viewLaporan(); break;
+                    case 'haflah': html = viewHaflah(); break; 
                     case 'cetak': html = viewCetak(); break;
                     case 'cetakSemua': html = viewCetakSemua(); break;
                     case 'profil': html = viewProfil(); break;
@@ -1887,7 +2098,11 @@
             const remedial = currentDb.filter(d => d.keterangan === 'Remedial').length;
             const belumLulus = currentDb.filter(d => d.keterangan === 'Belum Lulus').length;
 
-            new Chart(ctx, {
+            if (window.myDashboardChart) {
+                window.myDashboardChart.destroy();
+            }
+
+            window.myDashboardChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: ['Lulus', 'Remedial', 'Belum Lulus'],
