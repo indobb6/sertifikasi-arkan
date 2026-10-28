@@ -79,7 +79,7 @@ function viewPenilaian() {
                 <div class="md:col-span-2 mt-2">
                     <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Juz yang Diujikan</label>
                     <select id="inputJuz" onchange="generateSurahInputs()" class="w-full px-4 py-3.5 bg-gray-900 border border-gray-800 rounded-xl focus:ring-2 focus:ring-gray-500 text-sm font-bold text-white outline-none">
-                        ${[30, 29, 28, 27, 26].map(j => `<option value="${j}" ${data.juz == j ? 'selected' : ''}>Juz ${j}</option>`).join('')}
+                        ${[30, 29, 28, 27, 26, 1].map(j => `<option value="${j}" ${data.juz == j ? 'selected' : ''}>Juz ${j}</option>`).join('')}
                     </select>
                 </div>
             </div>
@@ -136,12 +136,25 @@ function generateSurahInputs() {
         existingScores = draftData.nilai || {};
     }
 
+    const existingNotes = (existingScores && typeof existingScores._catatan === 'object' && existingScores._catatan !== null)
+        ? existingScores._catatan
+        : {};
+
     listSurah.forEach(surah => {
-        const val = existingScores[surah] !== undefined ? existingScores[surah] : '';
+        const val = (existingScores[surah] !== undefined && existingScores[surah] !== null && surah !== '_catatan') 
+            ? existingScores[surah] 
+            : '';
+        const noteVal = existingNotes[surah] ? String(existingNotes[surah]).replace(/"/g, '&quot;') : '';
+
         html += `
-            <div class="flex items-center justify-between p-3 border border-gray-200 rounded-xl hover:border-gray-400 hover:shadow-sm transition bg-white group">
-                <label class="text-sm font-semibold text-gray-700 w-2/3 truncate group-hover:text-gray-900 transition">${surah}</label>
-                <input type="number" min="0" max="100" class="surah-input w-20 px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-gray-900 text-center font-bold text-gray-900 outline-none transition" data-surah="${surah}" value="${val}" oninput="hitungRataRata(); simpanDraft()" placeholder="0">
+            <div class="p-3 border border-gray-200 rounded-xl hover:border-gray-400 hover:shadow-sm transition bg-white flex flex-col justify-between">
+                <div class="flex items-center justify-between gap-2">
+                    <label class="text-sm font-semibold text-gray-800 truncate" title="${surah}">${surah}</label>
+                    <input type="number" min="0" max="100" class="surah-input w-20 px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-lg focus:bg-white focus:ring-2 focus:ring-gray-900 text-center font-bold text-gray-900 outline-none transition" data-surah="${surah}" value="${val}" oninput="hitungRataRata(); simpanDraft()" placeholder="0">
+                </div>
+                <div class="mt-2 pt-2 border-t border-gray-100">
+                    <input type="text" class="surah-note w-full px-2.5 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-1 focus:ring-gray-900 text-gray-700 outline-none transition placeholder:text-gray-400 placeholder:italic" data-surah="${surah}" value="${noteVal}" oninput="simpanDraft()" placeholder="Catatan/kesalahan ayat (opsional)...">
+                </div>
             </div>
         `;
     });
@@ -190,11 +203,27 @@ function simpanPenilaian() {
 
     const existingData = state.db.find(d => d.id === id) || {};
     const inputs = document.querySelectorAll('.surah-input');
+    const noteInputs = document.querySelectorAll('.surah-note');
+
     let nilai = {};
+    let catatanSurah = {};
+
     inputs.forEach(input => {
         const surah = input.getAttribute('data-surah');
         nilai[surah] = input.value === '' ? 0 : parseFloat(input.value);
     });
+
+    noteInputs.forEach(noteInput => {
+        const surah = noteInput.getAttribute('data-surah');
+        const note = noteInput.value.trim();
+        if (note) {
+            catatanSurah[surah] = note;
+        }
+    });
+
+    if (Object.keys(catatanSurah).length > 0) {
+        nilai._catatan = catatanSurah;
+    }
 
     const hasil = hitungRataRata();
 
@@ -228,11 +257,27 @@ function simpanDraft() {
     if (!inputJuzEl) return;
     
     const inputs = document.querySelectorAll('.surah-input');
+    const noteInputs = document.querySelectorAll('.surah-note');
+
     let nilai = {};
+    let catatanSurah = {};
+
     inputs.forEach(input => {
         const surah = input.getAttribute('data-surah');
         nilai[surah] = input.value === '' ? '' : parseFloat(input.value);
     });
+
+    noteInputs.forEach(noteInput => {
+        const surah = noteInput.getAttribute('data-surah');
+        const note = noteInput.value.trim();
+        if (note) {
+            catatanSurah[surah] = note;
+        }
+    });
+
+    if (Object.keys(catatanSurah).length > 0) {
+        nilai._catatan = catatanSurah;
+    }
 
     const draft = {
         id: document.getElementById('inputId')?.value || '',
@@ -256,6 +301,7 @@ function resetFormPenilaian() {
     if(document.getElementById('inputCatatan')) document.getElementById('inputCatatan').value = '';
     if(document.getElementById('inputId')) document.getElementById('inputId').value = '';
     document.querySelectorAll('.surah-input').forEach(el => el.value = '');
+    document.querySelectorAll('.surah-note').forEach(el => el.value = '');
     navigate('penilaian');
 }
 

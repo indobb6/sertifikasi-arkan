@@ -104,7 +104,7 @@ function viewPendaftaran() {
                 <div>
                     <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Juz yang akan Diujikan</label>
                     <select id="inputJuz" class="w-full px-4 py-3 bg-gray-900 border border-gray-800 rounded-xl focus:ring-2 focus:ring-gray-500 outline-none text-sm font-bold text-white">
-                        ${[30, 29, 28, 27, 26].map(j => `<option value="${j}" ${d.juz == j ? 'selected' : ''}>Juz ${j}</option>`).join('')}
+                        ${[30, 29, 28, 27, 26, 1].map(j => `<option value="${j}" ${d.juz == j ? 'selected' : ''}>Juz ${j}</option>`).join('')}
                     </select>
                 </div>
 

@@ -13,20 +13,25 @@ function exportExcelIndividu() {
     if(!d) return;
 
     const listSurah = surahData[d.juz] || [];
+    const catatanSurah = (d.nilai && typeof d.nilai._catatan === 'object' && d.nilai._catatan !== null)
+        ? d.nilai._catatan
+        : {};
+
     let ws_data = [
         ["LAPORAN HASIL SERTIFIKASI AL-QUR'AN"],
         ["Tahun Ajaran", d.tahunAjaran, "Semester", d.semester],
         ["Nama Lengkap", d.nama, "Kelas", d.kelas],
         ["Juz", d.juz, "Pengampu", d.penguji || d.pengampu || ''],
         ["Keterangan", d.keterangan || 'Belum Dinilai', "Rata-rata", d.rataRata],
-        ["Catatan", d.catatan || ''],
+        ["Catatan Umum", d.catatan || ''],
         [],
-        ["No", "Nama Surat", "Nilai"]
+        ["No", "Nama Surat", "Nilai", "Catatan"]
     ];
 
     listSurah.forEach((surah, index) => {
-        const nilai = d.nilai[surah] !== undefined ? d.nilai[surah] : 0;
-        ws_data.push([index + 1, surah, nilai]);
+        const nilai = (d.nilai && d.nilai[surah] !== undefined && surah !== '_catatan') ? d.nilai[surah] : 0;
+        const note = catatanSurah[surah] || '';
+        ws_data.push([index + 1, surah, nilai, note]);
     });
 
     const ws = XLSX.utils.aoa_to_sheet(ws_data);
@@ -40,14 +45,22 @@ function viewCetak() {
     if(!d) return navigate('dashboard');
 
     const listSurah = surahData[d.juz] || [];
+    const catatanSurah = (d.nilai && typeof d.nilai._catatan === 'object' && d.nilai._catatan !== null)
+        ? d.nilai._catatan
+        : {};
+
     let rows = listSurah.map((surah, index) => {
-        const nilai = d.nilai[surah] !== undefined ? d.nilai[surah] : 0;
+        const nilai = (d.nilai && d.nilai[surah] !== undefined && surah !== '_catatan') ? d.nilai[surah] : 0;
+        const note = catatanSurah[surah] || '';
         const isRemedial = d.keterangan === 'Remedial' && nilai < 78;
         return `
             <tr class="${isRemedial ? 'bg-amber-50 print:bg-transparent' : ''}">
                 <td class="border border-black px-2 sm:px-4 py-2 text-center w-10 sm:w-12">${index + 1}</td>
-                <td class="border border-black px-3 sm:px-4 py-2 ${isRemedial ? 'font-bold text-amber-700 print:text-black' : ''}">${surah} ${isRemedial ? '<span class="text-[10px] sm:text-xs ml-1 no-print">(Remedial)</span>' : ''}</td>
-                <td class="border border-black px-2 sm:px-4 py-2 text-center w-20 sm:w-32 font-medium ${isRemedial ? 'text-red-600 print:text-black' : ''}">${nilai}</td>
+                <td class="border border-black px-3 sm:px-4 py-2 ${isRemedial ? 'font-bold text-amber-700 print:text-black' : ''}">
+                    ${surah} ${isRemedial ? '<span class="text-[10px] sm:text-xs ml-1 no-print">(Remedial)</span>' : ''}
+                </td>
+                <td class="border border-black px-2 sm:px-4 py-2 text-center w-20 sm:w-28 font-medium ${isRemedial ? 'text-red-600 print:text-black' : ''}">${nilai}</td>
+                <td class="border border-black px-3 sm:px-4 py-2 text-xs text-gray-700 print:text-black">${note ? note : '<span class="text-gray-400 print:text-gray-500 italic">-</span>'}</td>
             </tr>
         `;
     }).join('');
@@ -102,7 +115,8 @@ function viewCetak() {
                         <tr class="bg-gray-100 print:bg-gray-200">
                             <th class="border-2 border-black px-3 sm:px-4 py-3 text-center w-12 text-[11px] uppercase tracking-widest">No</th>
                             <th class="border-2 border-black px-4 py-3 text-center text-[11px] uppercase tracking-widest">Nama Surat</th>
-                            <th class="border-2 border-black px-4 py-3 text-center w-32 text-[11px] uppercase tracking-widest">Nilai</th>
+                            <th class="border-2 border-black px-4 py-3 text-center w-28 text-[11px] uppercase tracking-widest">Nilai</th>
+                            <th class="border-2 border-black px-4 py-3 text-center text-[11px] uppercase tracking-widest">Catatan / Evaluasi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -112,6 +126,7 @@ function viewCetak() {
                         <tr class="bg-gray-50 print:bg-gray-100">
                             <th colspan="2" class="border-2 border-black px-4 py-4 text-right uppercase font-bold text-xs tracking-widest">Rata-Rata Nilai Akhir</th>
                             <th class="border-2 border-black px-4 py-4 text-center text-xl font-black">${d.rataRata}</th>
+                            <th class="border-2 border-black px-4 py-4"></th>
                         </tr>
                     </tfoot>
                 </table>
@@ -136,6 +151,21 @@ function viewCetak() {
     `;
 }
 
+function getCatatanGabungan(d) {
+    let parts = [];
+    if (d.catatan && d.catatan.trim()) {
+        parts.push(d.catatan.trim());
+    }
+    if (d.nilai && typeof d.nilai._catatan === 'object' && d.nilai._catatan !== null) {
+        Object.entries(d.nilai._catatan).forEach(([surah, note]) => {
+            if (note && String(note).trim()) {
+                parts.push(`${surah}: ${String(note).trim()}`);
+            }
+        });
+    }
+    return parts.join('; ');
+}
+
 function exportExcelSemua() {
     if (!state.filterCetak) {
         if (state.db.length > 0) {
@@ -149,7 +179,7 @@ function exportExcelSemua() {
     const { tahunAjaran, semester } = state.filterCetak;
     let filteredDb = state.db.filter(d => d.tahunAjaran === tahunAjaran && d.semester === semester);
 
-    if (state.sortLaporan === 'nama_az') filteredDb.sort((a, b) => String(a.nama || '').localeCompare(String(b.nama || '')));
+    if (state.sortLaporan === 'nama_az') filteredDb.sort((a, b) => String(a.nama || '').localeCompare(String(a.nama || '')));
     else if (state.sortLaporan === 'nama_za') filteredDb.sort((a, b) => String(b.nama || '').localeCompare(String(a.nama || '')));
     else if (state.sortLaporan === 'kelas') filteredDb.sort((a, b) => String(a.kelas || '').localeCompare(String(b.kelas || ''), undefined, {numeric: true}));
     else if (state.sortLaporan === 'nilai_tinggi') filteredDb.sort((a, b) => (b.rataRata || 0) - (a.rataRata || 0));
@@ -160,10 +190,10 @@ function exportExcelSemua() {
         "Nama Lengkap": d.nama,
         "Kelas": d.kelas,
         "Juz": d.juz,
-        "Rata-rata": d.rataRata,
+        "Nilai": d.rataRata,
+        "Catatan": getCatatanGabungan(d),
         "Keterangan": d.keterangan || 'Belum Dinilai',
-        "Pengampu": d.penguji || d.pengampu || '',
-        "Catatan": d.catatan || ''
+        "Pengampu": d.penguji || d.pengampu || ''
     }));
 
     const ws = XLSX.utils.json_to_sheet(ws_data);
@@ -188,24 +218,28 @@ function viewCetakSemua() {
     const { tahunAjaran, semester } = state.filterCetak;
     let filteredDb = state.db.filter(d => d.tahunAjaran === tahunAjaran && d.semester === semester);
 
-    if (state.sortLaporan === 'nama_az') filteredDb.sort((a, b) => String(a.nama || '').localeCompare(String(b.nama || '')));
+    if (state.sortLaporan === 'nama_az') filteredDb.sort((a, b) => String(a.nama || '').localeCompare(String(a.nama || '')));
     else if (state.sortLaporan === 'nama_za') filteredDb.sort((a, b) => String(b.nama || '').localeCompare(String(a.nama || '')));
     else if (state.sortLaporan === 'kelas') filteredDb.sort((a, b) => String(a.kelas || '').localeCompare(String(b.kelas || ''), undefined, {numeric: true}));
     else if (state.sortLaporan === 'nilai_tinggi') filteredDb.sort((a, b) => (b.rataRata || 0) - (a.rataRata || 0));
     else if (state.sortLaporan === 'nilai_rendah') filteredDb.sort((a, b) => (a.rataRata || 0) - (b.rataRata || 0));
 
-    let trs = filteredDb.map((d, index) => `
+    let trs = filteredDb.map((d, index) => {
+        const cat = getCatatanGabungan(d);
+        return `
         <tr>
-            <td class="border border-black px-4 py-3 text-center w-12">${index + 1}</td>
+            <td class="border border-black px-3 py-3 text-center w-12">${index + 1}</td>
             <td class="border border-black px-4 py-3 font-semibold">${d.nama}</td>
-            <td class="border border-black px-4 py-3 text-center">${d.kelas}</td>
-            <td class="border border-black px-4 py-3 text-center">Juz ${d.juz}</td>
-            <td class="border border-black px-4 py-3 text-center font-black">${d.rataRata}</td>
-            <td class="border border-black px-4 py-3 text-center font-bold ${d.keterangan === 'Lulus' ? 'text-green-700' : d.keterangan === 'Remedial' ? 'text-amber-600' : 'text-red-600'} print:text-black">${d.keterangan || 'Belum Dinilai'}</td>
+            <td class="border border-black px-3 py-3 text-center">${d.kelas}</td>
+            <td class="border border-black px-3 py-3 text-center">Juz ${d.juz}</td>
+            <td class="border border-black px-3 py-3 text-center font-black">${d.rataRata}</td>
+            <td class="border border-black px-4 py-3 text-xs text-gray-700 print:text-black">${cat || '-'}</td>
+            <td class="border border-black px-3 py-3 text-center font-bold ${d.keterangan === 'Lulus' ? 'text-green-700' : d.keterangan === 'Remedial' ? 'text-amber-600' : 'text-red-600'} print:text-black">${d.keterangan || 'Belum Dinilai'}</td>
         </tr>
-    `).join('');
+    `;
+    }).join('');
 
-    if(filteredDb.length === 0) trs = `<tr><td colspan="6" class="border border-black px-4 py-10 text-center text-gray-500 font-medium italic">Belum ada data sertifikasi untuk periode ini.</td></tr>`;
+    if(filteredDb.length === 0) trs = `<tr><td colspan="7" class="border border-black px-4 py-10 text-center text-gray-500 font-medium italic">Belum ada data sertifikasi untuk periode ini.</td></tr>`;
 
     let optionsTahun = tahunAjaranList.map(t => `<option value="${t}" ${tahunAjaran === t ? 'selected' : ''}>${t}</option>`).join('');
 
@@ -253,7 +287,8 @@ function viewCetakSemua() {
                             <th class="border-2 border-black px-4 py-3.5 text-[11px] font-bold uppercase tracking-widest">Nama Lengkap</th>
                             <th class="border-2 border-black px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-widest">Kelas</th>
                             <th class="border-2 border-black px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-widest">Juz</th>
-                            <th class="border-2 border-black px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-widest">Rata-rata</th>
+                            <th class="border-2 border-black px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-widest">Nilai</th>
+                            <th class="border-2 border-black px-4 py-3.5 text-[11px] font-bold uppercase tracking-widest">Catatan</th>
                             <th class="border-2 border-black px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-widest">Keterangan</th>
                         </tr>
                     </thead>

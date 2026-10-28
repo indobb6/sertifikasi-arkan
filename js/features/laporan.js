@@ -9,6 +9,30 @@ function updateSortLaporan(val) {
     }
 }
 
+function formatCatatanLaporan(d) {
+    let items = [];
+    if (d.catatan && d.catatan.trim()) {
+        items.push(`<div class="text-gray-800"><span class="font-semibold text-gray-500">Umum:</span> ${escapeHtml(d.catatan.trim())}</div>`);
+    }
+    if (d.nilai && typeof d.nilai._catatan === 'object' && d.nilai._catatan !== null) {
+        Object.entries(d.nilai._catatan).forEach(([surah, note]) => {
+            if (note && String(note).trim()) {
+                items.push(`<div class="text-gray-700"><span class="font-semibold text-gray-900">${escapeHtml(surah)}:</span> <span class="text-gray-600">${escapeHtml(String(note).trim())}</span></div>`);
+            }
+        });
+    }
+    if (items.length === 0) return '<span class="text-gray-400 italic">-</span>';
+    return `<div class="space-y-1 text-xs max-w-xs break-words">${items.join('')}</div>`;
+}
+
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
 function viewLaporan() {
     if (state.role !== 'admin' && state.role !== 'penguji') return navigate('dashboard');
 
@@ -24,7 +48,7 @@ function viewLaporan() {
 
     if(displayDb.length === 0) {
         const emptyMsg = `<div class="py-10 text-center text-gray-500 font-medium text-sm">Belum ada data nilai.</div>`;
-        desktopTrs = `<tr><td colspan="7">${emptyMsg}</td></tr>`;
+        desktopTrs = `<tr><td colspan="8">${emptyMsg}</td></tr>`;
         mobileCards = emptyMsg;
     } else {
         displayDb.forEach((d, index) => {
@@ -33,6 +57,9 @@ function viewLaporan() {
                                   statusText === 'Remedial' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 
                                   statusText === 'Belum Lulus' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-gray-50 text-gray-600 border border-gray-200';
 
+            const catatanContent = formatCatatanLaporan(d);
+            const hasCatatan = !catatanContent.includes('italic');
+
             desktopTrs += `
                 <tr class="hover:bg-gray-50 border-b border-gray-100 transition">
                     <td class="px-4 py-4 text-sm text-gray-500 text-center">${index + 1}</td>
@@ -40,6 +67,7 @@ function viewLaporan() {
                     <td class="px-4 py-4 text-sm text-gray-600 text-center font-medium">${d.kelas}</td>
                     <td class="px-4 py-4 text-sm font-bold text-gray-600 text-center">Juz ${d.juz}</td>
                     <td class="px-4 py-4 text-sm font-black text-center text-gray-900">${d.rataRata}</td>
+                    <td class="px-4 py-4 text-xs">${catatanContent}</td>
                     <td class="px-4 py-4 text-sm text-center">
                         <span class="px-3 py-1.5 rounded-lg text-[10px] uppercase tracking-widest font-bold ${statusBgClass}">${statusText}</span>
                     </td>
@@ -63,7 +91,13 @@ function viewLaporan() {
                             <div class="font-bold text-gray-900 text-sm searchable-name-mobile line-clamp-1 pr-2">${d.nama}</div>
                             <span class="px-2.5 py-1 rounded-md text-[9px] uppercase tracking-widest font-bold shrink-0 ${statusBgClass}">${statusText}</span>
                         </div>
-                        <div class="text-[11px] font-medium text-gray-500 mb-4">${d.kelas} &bull; Juz ${d.juz}</div>
+                        <div class="text-[11px] font-medium text-gray-500 mb-2">${d.kelas} &bull; Juz ${d.juz}</div>
+                        ${hasCatatan ? `
+                            <div class="mb-3 p-2.5 bg-gray-50 rounded-xl border border-gray-100 text-xs">
+                                <span class="font-bold text-[10px] text-gray-400 uppercase tracking-wider block mb-1">Catatan:</span>
+                                ${catatanContent}
+                            </div>
+                        ` : ''}
                         
                         <div class="flex justify-between items-end border-t border-gray-100 pt-4">
                             <div>
@@ -121,7 +155,8 @@ function viewLaporan() {
                             <th class="px-4 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Nama Lengkap</th>
                             <th class="px-4 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest text-center">Kelas</th>
                             <th class="px-4 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest text-center">Juz</th>
-                            <th class="px-4 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest text-center">Rata-rata</th>
+                            <th class="px-4 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest text-center">Nilai</th>
+                            <th class="px-4 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest">Catatan</th>
                             <th class="px-4 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest text-center">Status</th>
                             <th class="px-4 py-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest text-center">Aksi</th>
                         </tr>

@@ -21,7 +21,8 @@ const surahData = {
     "29": ["Al-Mulk", "Al-Qalam", "Al-Haqqah", "Al-Ma'arij", "Nuh", "Al-Jinn", "Al-Muzzammil", "Al-Muddaththir", "Al-Qiyamah", "Al-Insan", "Al-Mursalat"],
     "28": ["Al-Mujadilah", "Al-Hashr", "Al-Mumtahanah", "As-Saff", "Al-Jumu'ah", "Al-Munafiqun", "At-Taghabun", "At-Talaq", "At-Tahrim"],
     "27": ["Az-Zariyat", "At-Tur", "An-Najm", "Al-Qamar", "Ar-Rahman", "Al-Waqi'ah", "Al-Hadid"],
-    "26": ["Al-Ahqaf", "Muhammad", "Al-Fath", "Al-Hujurat", "Qaf"]
+    "26": ["Al-Ahqaf", "Muhammad", "Al-Fath", "Al-Hujurat", "Qaf"],
+    "1": ["Al-Fatihah", "Al-Baqarah"]
 };
 
 const tahunAjaranList = ["2024/2025", "2025/2026", "2026/2027", "2027/2028", "2028/2029", "2029/2030"];
