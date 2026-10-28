@@ -1,8 +1,8 @@
 // --- SUPABASE BACKEND INTEGRATION ---
 const server = {
     init: async () => {
-        if (SUPABASE_URL.includes('ISI_DENGAN_PROJECT_URL')) {
-            showToast("Tolong konfigurasikan SUPABASE_URL di kode terlebih dahulu.", "error");
+        if (!supabaseClient || !SUPABASE_URL || !SUPABASE_ANON_KEY) {
+            showToast("Konfigurasi Supabase belum diatur. Silakan buat file js/env.js.", "error");
             return;
         }
 

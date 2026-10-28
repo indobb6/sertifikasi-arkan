@@ -36,15 +36,29 @@ sertifikasi-arkan/
         └── profil.js            # Pengaturan akun penguji (nama & ganti password)
 ```
 
+## 🔐 Konfigurasi Environment (.env)
+
+Kredensial Supabase kini dipisahkan dari source code yang dilacak Git agar tidak terekspos di repository publik:
+
+1. Buat/salin file konfigurasi:
+   - Salin `.env.example` menjadi `.env`
+   - Atau salin `js/env.example.js` menjadi `js/env.js`
+2. Isi `SUPABASE_URL` dan `SUPABASE_ANON_KEY` sesuai project Supabase Anda.
+3. Jika mengubah nilai di file `.env`, jalankan perintah berikut untuk sinkronisasi ke browser:
+   ```bash
+   node sync-env.js
+   ```
+> File `.env` dan `js/env.js` otomatis diabaikan oleh `.gitignore` sehingga aman dari commit/push ke GitHub.
+
 ## 🚀 Panduan Pengembangan
 
 Jika Anda ingin mengubah atau menambahkan sesuatu pada aplikasi:
-- **Mengubah data surah / kelas / periode:** Buka [`js/config.js`](file:///js/config.js).
-- **Mengubah tampilan header/navbar:** Buka [`js/components/layout.js`](file:///js/components/layout.js).
-- **Mengubah form penilaian atau surat:** Buka [`js/features/penilaian.js`](file:///js/features/penilaian.js).
-- **Mengubah format sertifikat atau cetak:** Buka [`js/features/cetak.js`](file:///js/features/cetak.js).
-- **Mengubah form pendaftaran siswa:** Buka [`js/features/pendaftaran.js`](file:///js/features/pendaftaran.js).
-- **Mengubah query / endpoint database:** Buka [`js/services/supabase.js`](file:///js/services/supabase.js).
+- **Mengubah data surah / kelas / periode:** Buka [`js/config.js`](file:///c:/Users/indob/OneDrive/Documents/Github%20sertifikasi/sertifikasi-arkan/js/config.js).
+- **Mengubah tampilan header/navbar:** Buka [`js/components/layout.js`](file:///c:/Users/indob/OneDrive/Documents/Github%20sertifikasi/sertifikasi-arkan/js/components/layout.js).
+- **Mengubah form penilaian atau surat:** Buka [`js/features/penilaian.js`](file:///c:/Users/indob/OneDrive/Documents/Github%20sertifikasi/sertifikasi-arkan/js/features/penilaian.js).
+- **Mengubah format sertifikat atau cetak:** Buka [`js/features/cetak.js`](file:///c:/Users/indob/OneDrive/Documents/Github%20sertifikasi/sertifikasi-arkan/js/features/cetak.js).
+- **Mengubah form pendaftaran siswa:** Buka [`js/features/pendaftaran.js`](file:///c:/Users/indob/OneDrive/Documents/Github%20sertifikasi/sertifikasi-arkan/js/features/pendaftaran.js).
+- **Mengubah query / endpoint database:** Buka [`js/services/supabase.js`](file:///c:/Users/indob/OneDrive/Documents/Github%20sertifikasi/sertifikasi-arkan/js/services/supabase.js).
 
 ## 🛠️ Teknologi yang Digunakan
 - **HTML5 & Vanilla JavaScript (Modular ES)**

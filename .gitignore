@@ -1,0 +1,20 @@
+# Environment variables (Credentials)
+.env
+.env.local
+.env.*.local
+*.env
+js/env.js
+
+# Dependencies
+node_modules/
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
