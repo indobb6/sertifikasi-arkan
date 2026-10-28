@@ -1,13 +1,15 @@
 // =========================================================================
-// KONFIGURASI SUPABASE (Dimuat secara aman dari js/env.js / window.__ENV__)
+// KONFIGURASI SUPABASE
+// Mengutamakan window.__ENV__ (dari js/env.js lokal), dengan fallback default
+// agar website tetap dapat berjalan normal saat di-deploy (misal di GitHub Pages).
 // =========================================================================
 const ENV = window.__ENV__ || {};
-const SUPABASE_URL = ENV.SUPABASE_URL || ''; 
-const SUPABASE_ANON_KEY = ENV.SUPABASE_ANON_KEY || '';
 
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    console.warn("Konfigurasi Supabase belum terpasang. Pastikan file js/env.js sudah dibuat dari js/env.example.js.");
-}
+const DEFAULT_SUPABASE_URL = 'https://eypymzelfwyeqsgjurcg.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV5cHltemVsZnd5ZXFzZ2p1cmNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1NTEzMDAsImV4cCI6MjA5MzEyNzMwMH0.Sa-hAA6OoluJBNwP2qc7Wb6Qfv58Mh8IIin1FwSCzII';
+
+const SUPABASE_URL = ENV.SUPABASE_URL || DEFAULT_SUPABASE_URL; 
+const SUPABASE_ANON_KEY = ENV.SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY;
 
 const supabaseClient = (window.supabase && SUPABASE_URL && SUPABASE_ANON_KEY)
     ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
