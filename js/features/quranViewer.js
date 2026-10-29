@@ -135,18 +135,17 @@ let quranModalState = {
 function normalizeSurahName(name) {
     if (!name) return '';
     return name.toLowerCase()
-        .replace(/['`’\^"_\-\s]/g, '')
-        .replace(/al/g, '')
-        .replace(/ash|adh|ath|an|az|ar|as/g, '');
+        .replace(/['`’‘“"”\^_\-\s\.\,]/g, '')
+        .replace(/^al|^ash|^adh|^ath|^an|^az|^ar|^as|^at|^ad|^aj/g, '');
 }
 
 // Cari metadata surat berdasarkan nama (misal: "An-Naba", "Al-Baqarah", "'Abasa")
 function cariSurahInfo(namaSurah) {
     if (!namaSurah) return null;
-    const cleanInput = namaSurah.toLowerCase().replace(/['`’\^"_\-\s]/g, '');
+    const cleanInput = namaSurah.toLowerCase().replace(/['`’‘“"”\^_\-\s\.\,]/g, '');
     
     // 1. Coba match langsung
-    let match = QURAN_SURAHS.find(s => s.name.toLowerCase().replace(/['`’\^"_\-\s]/g, '') === cleanInput);
+    let match = QURAN_SURAHS.find(s => s.name.toLowerCase().replace(/['`’‘“"”\^_\-\s\.\,]/g, '') === cleanInput);
     if (match) return match;
 
     // 2. Coba match partial
@@ -155,7 +154,10 @@ function cariSurahInfo(namaSurah) {
     if (match) return match;
 
     // 3. Fallback pencocokan inklusif
-    return QURAN_SURAHS.find(s => cleanInput.includes(normalizeSurahName(s.name)) || normalizeSurahName(s.name).includes(cleanInput)) || null;
+    return QURAN_SURAHS.find(s => {
+        const sCore = normalizeSurahName(s.name);
+        return cleanInput.includes(sCore) || sCore.includes(cleanInput) || coreInput.includes(sCore) || sCore.includes(coreInput);
+    }) || null;
 }
 
 // Buka Modal Mushaf untuk Surat yang Diklik
