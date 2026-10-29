@@ -199,10 +199,31 @@ function gantiHalamanMushaf(direction) {
 // Toggle Zoom Level
 function toggleMushafZoom() {
     quranModalState.zoomLevel = quranModalState.zoomLevel === 100 ? 135 : 100;
-    const imgEl = document.getElementById('mushafPageImage');
+    const imgContainer = document.getElementById('mushafImageContainer');
+    const textContainer = document.getElementById('mushafTextContainer');
     const textEl = document.getElementById('mushafPageText');
-    if (imgEl) imgEl.style.transform = `scale(${quranModalState.zoomLevel / 100})`;
-    if (textEl) textEl.style.fontSize = quranModalState.zoomLevel === 100 ? '1.5rem' : '1.95rem';
+
+    if (imgContainer) {
+        if (quranModalState.zoomLevel === 135) {
+            imgContainer.classList.remove('max-w-[680px]');
+            imgContainer.classList.add('max-w-[920px]');
+        } else {
+            imgContainer.classList.remove('max-w-[920px]');
+            imgContainer.classList.add('max-w-[680px]');
+        }
+    }
+    if (textContainer) {
+        if (quranModalState.zoomLevel === 135) {
+            textContainer.classList.remove('max-w-[720px]');
+            textContainer.classList.add('max-w-[920px]');
+        } else {
+            textContainer.classList.remove('max-w-[920px]');
+            textContainer.classList.add('max-w-[720px]');
+        }
+    }
+    if (textEl) {
+        textEl.style.fontSize = quranModalState.zoomLevel === 100 ? '1.5rem' : '2.1rem';
+    }
 
     const zoomBtn = document.getElementById('btnMushafZoom');
     if (zoomBtn) {
@@ -298,47 +319,46 @@ function renderQuranModal() {
                 </div>
             </div>
 
-            <!-- Toolbar Halaman & Tombol Panah -->
-            <div class="px-4 py-2 bg-gray-850 border-b border-gray-800 flex items-center justify-between text-xs text-gray-300 gap-2">
+            <!-- Toolbar Halaman & Tombol Panah (Responsive Mobile-Friendly) -->
+            <div class="px-2.5 sm:px-4 py-2 bg-gray-850 border-b border-gray-800 flex items-center justify-between text-xs text-gray-300 gap-1.5 sm:gap-2">
                 <!-- Tombol Sebelumnya -->
-                <button type="button" onclick="gantiHalamanMushaf(-1)" class="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700 font-semibold flex items-center gap-1 transition disabled:opacity-40 disabled:cursor-not-allowed" id="btnPrevPage">
-                    <span>◀ Hal Sebelumnya</span>
+                <button type="button" onclick="gantiHalamanMushaf(-1)" class="flex-shrink-0 px-2.5 sm:px-3.5 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700 font-bold flex items-center gap-1 transition disabled:opacity-30 disabled:cursor-not-allowed text-xs" id="btnPrevPage" title="Halaman Sebelumnya">
+                    <span>◀</span> <span class="hidden sm:inline">Hal Sebelumnya</span><span class="sm:hidden text-[11px]">Sebelum</span>
                 </button>
 
                 <!-- Input / Dropdown Lompat Halaman -->
-                <div class="flex items-center gap-2">
-                    <span class="text-gray-400 hidden sm:inline">Halaman:</span>
-                    <select id="selectMushafPage" onchange="bukaMushafHalaman(this.value)" class="bg-gray-800 border border-gray-700 rounded-lg px-2.5 py-1 text-xs font-bold text-white focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                <div class="flex items-center gap-1 sm:gap-1.5 min-w-0 flex-1 justify-center px-1">
+                    <select id="selectMushafPage" onchange="bukaMushafHalaman(this.value)" class="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-xs font-bold text-white focus:outline-none focus:ring-1 focus:ring-emerald-500 w-full max-w-[150px] sm:max-w-[220px] text-center truncate">
                         ${Array.from({ length: 604 }, (_, i) => i + 1).map(p => `
                             <option value="${p}" ${p === quranModalState.currentPage ? 'selected' : ''}>
-                                Hal. ${p} ${getSurahNameForPage(p) ? `(${getSurahNameForPage(p)})` : ''}
+                                Hal. ${p} ${getSurahNameForPage(p) ? `- ${getSurahNameForPage(p)}` : ''}
                             </option>
                         `).join('')}
                     </select>
-                    <span class="text-gray-500 text-[11px]">/ 604</span>
+                    <span class="text-gray-500 text-[11px] whitespace-nowrap flex-shrink-0">/ 604</span>
                 </div>
 
                 <!-- Tombol Selanjutnya -->
-                <button type="button" onclick="gantiHalamanMushaf(1)" class="px-3 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700 font-semibold flex items-center gap-1 transition disabled:opacity-40 disabled:cursor-not-allowed" id="btnNextPage">
-                    <span>Hal Selanjutnya ▶</span>
+                <button type="button" onclick="gantiHalamanMushaf(1)" class="flex-shrink-0 px-2.5 sm:px-3.5 py-1.5 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700 font-bold flex items-center gap-1 transition disabled:opacity-30 disabled:cursor-not-allowed text-xs" id="btnNextPage" title="Halaman Selanjutnya">
+                    <span class="hidden sm:inline">Hal Selanjutnya</span><span class="sm:hidden text-[11px]">Lanjut</span> <span>▶</span>
                 </button>
             </div>
 
             <!-- Area Display Mushaf (Per Halaman) -->
-            <div class="flex-1 overflow-auto bg-[#f8f6f0] flex items-center justify-center p-2 sm:p-4 relative" id="mushafScrollArea">
+            <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden bg-[#f4f1ea] p-2 sm:p-5 relative flex flex-col items-center justify-start scroll-smooth" id="mushafScrollArea">
                 <!-- Loader Overlay -->
-                <div id="mushafLoader" class="absolute inset-0 bg-[#f8f6f0]/90 backdrop-blur-[2px] flex flex-col items-center justify-center z-10 transition-opacity">
+                <div id="mushafLoader" class="absolute inset-0 bg-[#f4f1ea]/90 backdrop-blur-[2px] flex flex-col items-center justify-center z-10 transition-opacity">
                     <div class="w-10 h-10 border-4 border-emerald-500/30 border-t-emerald-600 rounded-full animate-spin mb-3"></div>
                     <span class="text-xs font-bold text-gray-700">Memuat Halaman Mushaf...</span>
                 </div>
 
                 <!-- Kontainer Gambar Mushaf Asli (Default) -->
-                <div id="mushafImageContainer" class="w-full max-w-[680px] bg-white rounded-xl shadow-md border border-amber-200/60 p-2 sm:p-4 min-h-[500px] flex items-center justify-center transition-transform origin-top">
-                    <img id="mushafPageImage" src="" alt="Mushaf Al-Qur'an" class="max-w-full h-auto object-contain select-none transition-transform duration-200" onload="mushafImageLoaded()" onerror="mushafImageError()">
+                <div id="mushafImageContainer" class="w-full max-w-[680px] bg-white rounded-xl shadow-md border border-amber-200/80 p-2 sm:p-4 my-2 flex flex-col items-center justify-start transition-all duration-200">
+                    <img id="mushafPageImage" src="" alt="Mushaf Al-Qur'an" class="w-full h-auto object-contain select-none block" onload="mushafImageLoaded()" onerror="mushafImageError()">
                 </div>
 
                 <!-- Kontainer Teks Utsmani API (Mode Cadangan / Teks) -->
-                <div id="mushafTextContainer" class="w-full max-w-[720px] bg-[#fffef9] rounded-2xl shadow-md border-2 border-amber-300/70 p-6 sm:p-8 min-h-[520px] hidden flex-col justify-between">
+                <div id="mushafTextContainer" class="w-full max-w-[720px] bg-[#fffef9] rounded-2xl shadow-md border-2 border-amber-300/70 p-6 sm:p-8 my-2 hidden flex-col justify-between transition-all duration-200">
                     <div class="text-center pb-4 border-b border-amber-200/70 mb-4">
                         <div id="textModeHeader" class="text-xs font-bold text-amber-800 uppercase tracking-widest">MUSHAF MADINAH UTSMANI</div>
                         <div id="textModeBismillah" class="font-serif text-2xl text-gray-900 mt-2">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
@@ -413,6 +433,10 @@ function updateMushafPageContent() {
 
     if (prevBtn) prevBtn.disabled = page <= 1;
     if (nextBtn) nextBtn.disabled = page >= 604;
+
+    // Reset scroll posisi ke paling atas setiap ganti halaman agar bagian atas mushaf tidak tertutup
+    const scrollArea = document.getElementById('mushafScrollArea');
+    if (scrollArea) scrollArea.scrollTop = 0;
 
     const imgContainer = document.getElementById('mushafImageContainer');
     const textContainer = document.getElementById('mushafTextContainer');
