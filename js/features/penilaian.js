@@ -7,13 +7,14 @@ function viewPenilaian() {
 
     const fromDraft = !state.currentStudent && localStorage.getItem('draftPenilaian_Arkan');
     let data;
+    const currentPeriod = getCurrentPeriod();
     
     if (state.currentStudent) {
         data = state.currentStudent;
     } else if (fromDraft) {
         data = JSON.parse(localStorage.getItem('draftPenilaian_Arkan'));
     } else {
-        data = { id: '', nama: '', kelas: '', tahunAjaran: tahunAjaranList[0], semester: '1', juz: '30', nilai: {}, rataRata: 0, keterangan: '', catatan: '' };
+        data = { id: '', nama: '', kelas: '', tahunAjaran: currentPeriod.tahunAjaran, semester: currentPeriod.semester, juz: '30', nilai: {}, rataRata: 0, keterangan: '', catatan: '' };
     }
 
     const isEdit = data.id !== '';
@@ -322,16 +323,32 @@ function tampilkanPreviewPencarian() {
 
     if (!input) { dropdown.classList.add('hidden'); return; }
 
+    const period = getCurrentPeriod();
     const matches = state.db.filter(d => String(d.nama || '').toLowerCase().includes(input));
+
+    // Urutkan: Peserta sesi aktif saat ini paling atas, peserta arsip di bawah
+    matches.sort((a, b) => {
+        const aActive = (a.tahunAjaran === period.tahunAjaran && String(a.semester) === String(period.semester)) ? 1 : 0;
+        const bActive = (b.tahunAjaran === period.tahunAjaran && String(b.semester) === String(period.semester)) ? 1 : 0;
+        return bActive - aActive;
+    });
 
     if (matches.length > 0) {
         let html = '';
         matches.forEach(m => {
+            const isCurrentSession = (m.tahunAjaran === period.tahunAjaran && String(m.semester) === String(period.semester));
             const statusText = m.keterangan ? m.keterangan : 'Belum Dinilai';
             const warnaStatus = statusText === 'Lulus' ? 'text-emerald-600' : statusText === 'Remedial' ? 'text-amber-600' : statusText === 'Belum Lulus' ? 'text-red-500' : 'text-gray-500';
+            const sessionBadge = isCurrentSession 
+                ? '<span class="bg-emerald-50 text-emerald-700 text-[9px] px-1.5 py-0.5 rounded font-bold border border-emerald-200">Sesi Aktif</span>' 
+                : `<span class="bg-amber-50 text-amber-700 text-[9px] px-1.5 py-0.5 rounded font-bold border border-amber-200">Arsip (TA ${m.tahunAjaran} Smt ${m.semester})</span>`;
+
             html += `
-                <div onclick="pilihSiswaEdit('${m.id}')" class="px-5 py-4 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition">
-                    <div class="font-bold text-gray-900 text-sm">${m.nama}</div>
+                <div onclick="pilihSiswaEdit('${m.id}')" class="px-5 py-3.5 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition">
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="font-bold text-gray-900 text-sm">${m.nama}</div>
+                        ${sessionBadge}
+                    </div>
                     <div class="text-[11px] text-gray-500 mt-1 font-medium">
                         ${m.kelas} &bull; Juz ${m.juz} &bull; <span class="${warnaStatus} font-bold">${statusText}</span>
                     </div>

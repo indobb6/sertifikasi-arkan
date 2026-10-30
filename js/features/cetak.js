@@ -49,25 +49,100 @@ function viewCetak() {
         ? d.nilai._catatan
         : {};
 
-    let rows = listSurah.map((surah, index) => {
+    const renderSurahRow = (surah, index) => {
         const nilai = (d.nilai && d.nilai[surah] !== undefined && surah !== '_catatan') ? d.nilai[surah] : 0;
         const note = catatanSurah[surah] || '';
         const isRemedial = d.keterangan === 'Remedial' && nilai < 78;
         return `
             <tr class="${isRemedial ? 'bg-amber-50 print:bg-transparent' : ''}">
-                <td class="border border-black px-2 sm:px-4 py-2 text-center w-10 sm:w-12">${index + 1}</td>
-                <td class="border border-black px-3 sm:px-4 py-2 ${isRemedial ? 'font-bold text-amber-700 print:text-black' : ''}">
-                    ${surah} ${isRemedial ? '<span class="text-[10px] sm:text-xs ml-1 no-print">(Remedial)</span>' : ''}
+                <td class="border border-black px-1.5 sm:px-2 py-1 sm:py-1.5 print:py-0.5 print:px-1.5 text-center w-8 text-xs print:text-[10px]">${index + 1}</td>
+                <td class="border border-black px-2 sm:px-3 py-1 sm:py-1.5 print:py-0.5 print:px-2 text-xs print:text-[10px] ${isRemedial ? 'font-bold text-amber-700 print:text-black' : ''}">
+                    ${surah} ${isRemedial ? '<span class="text-[9px] ml-1 no-print text-amber-600">(Rem)</span>' : ''}
                 </td>
-                <td class="border border-black px-2 sm:px-4 py-2 text-center w-20 sm:w-28 font-medium ${isRemedial ? 'text-red-600 print:text-black' : ''}">${nilai}</td>
-                <td class="border border-black px-3 sm:px-4 py-2 text-xs text-gray-700 print:text-black">${note ? note : '<span class="text-gray-400 print:text-gray-500 italic">-</span>'}</td>
+                <td class="border border-black px-1.5 sm:px-2 py-1 sm:py-1.5 print:py-0.5 print:px-1.5 text-center w-14 sm:w-16 print:w-12 font-bold text-xs print:text-[10px] ${isRemedial ? 'text-red-600 print:text-black' : ''}">${nilai}</td>
+                <td class="border border-black px-2 py-1 sm:py-1.5 print:py-0.5 print:px-2 text-[11px] print:text-[9.5px] text-gray-700 print:text-black">${note ? note : '<span class="text-gray-400 print:text-gray-500 italic">-</span>'}</td>
             </tr>
         `;
-    }).join('');
+    };
+
+    const isMultiColumn = listSurah.length > 18;
+    let tableLayoutHtml = '';
+
+    if (isMultiColumn) {
+        const mid = Math.ceil(listSurah.length / 2);
+        const col1 = listSurah.slice(0, mid);
+        const col2 = listSurah.slice(mid);
+
+        tableLayoutHtml = `
+            <div class="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-2.5 mb-3 print:mb-2">
+                <table class="w-full border-collapse border-2 border-black">
+                    <thead>
+                        <tr class="bg-gray-100 print:bg-gray-200">
+                            <th class="border-2 border-black px-1.5 py-1 text-center w-8 text-[10px] uppercase font-bold">No</th>
+                            <th class="border-2 border-black px-2 py-1 text-center text-[10px] uppercase font-bold">Nama Surat</th>
+                            <th class="border-2 border-black px-1.5 py-1 text-center w-12 text-[10px] uppercase font-bold">Nilai</th>
+                            <th class="border-2 border-black px-2 py-1 text-center text-[10px] uppercase font-bold">Catatan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${col1.map((s, idx) => renderSurahRow(s, idx)).join('')}
+                    </tbody>
+                </table>
+                <table class="w-full border-collapse border-2 border-black">
+                    <thead>
+                        <tr class="bg-gray-100 print:bg-gray-200">
+                            <th class="border-2 border-black px-1.5 py-1 text-center w-8 text-[10px] uppercase font-bold">No</th>
+                            <th class="border-2 border-black px-2 py-1 text-center text-[10px] uppercase font-bold">Nama Surat</th>
+                            <th class="border-2 border-black px-1.5 py-1 text-center w-12 text-[10px] uppercase font-bold">Nilai</th>
+                            <th class="border-2 border-black px-2 py-1 text-center text-[10px] uppercase font-bold">Catatan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${col2.map((s, idx) => renderSurahRow(s, mid + idx)).join('')}
+                    </tbody>
+                </table>
+            </div>
+            <div class="flex justify-between items-center bg-gray-50 print:bg-gray-100 border-2 border-black px-4 py-2 print:py-1 mb-3 print:mb-2 rounded-lg">
+                <span class="uppercase font-bold text-xs print:text-[11px] tracking-wider">Rata-Rata Nilai Akhir</span>
+                <span class="text-xl print:text-lg font-black">${d.rataRata}</span>
+            </div>
+        `;
+    } else {
+        tableLayoutHtml = `
+            <div class="overflow-x-auto hide-scrollbar mb-4 print:mb-2">
+                <table class="w-full border-collapse border-2 border-black">
+                    <thead>
+                        <tr class="bg-gray-100 print:bg-gray-200">
+                            <th class="border-2 border-black px-2 py-1.5 text-center w-10 text-[10px] uppercase font-bold">No</th>
+                            <th class="border-2 border-black px-3 py-1.5 text-center text-[10px] uppercase font-bold">Nama Surat</th>
+                            <th class="border-2 border-black px-2 py-1.5 text-center w-20 text-[10px] uppercase font-bold">Nilai</th>
+                            <th class="border-2 border-black px-3 py-1.5 text-center text-[10px] uppercase font-bold">Catatan / Evaluasi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${listSurah.map((s, idx) => renderSurahRow(s, idx)).join('')}
+                    </tbody>
+                    <tfoot>
+                        <tr class="bg-gray-50 print:bg-gray-100">
+                            <th colspan="2" class="border-2 border-black px-3 py-2 print:py-1 text-right uppercase font-bold text-xs print:text-[11px]">Rata-Rata Nilai Akhir</th>
+                            <th class="border-2 border-black px-2 py-2 print:py-1 text-center text-lg font-black">${d.rataRata}</th>
+                            <th class="border-2 border-black px-3 py-2 print:py-1"></th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        `;
+    }
 
     let textColorKeterangan = d.keterangan === 'Lulus' ? 'text-green-700' : d.keterangan === 'Remedial' ? 'text-amber-600' : d.keterangan === 'Belum Lulus' ? 'text-red-600' : 'text-gray-800';
 
     return `
+        <style>
+            @page {
+                size: portrait;
+                margin: 7mm 9mm;
+            }
+        </style>
         <div class="no-print bg-gray-900 sticky top-0 z-50 shadow-lg pt-[env(safe-area-inset-top)]">
             <div class="p-3 sm:p-5 flex flex-col sm:flex-row justify-between items-center text-white gap-4">
                 <button onclick="navigate('${state.role === 'pengunjung' ? 'dashboard' : 'laporan'}')" class="w-full sm:w-auto px-4 py-2.5 bg-gray-800 hover:bg-gray-700 rounded-xl text-sm font-bold transition flex justify-center items-center gap-2 border border-gray-700">
@@ -86,65 +161,44 @@ function viewCetak() {
             </div>
         </div>
 
-        <div class="print-container max-w-4xl mx-auto bg-white p-6 sm:p-12 min-h-screen shadow-lg">
-            <div class="text-center mb-8 sm:mb-10 border-b-2 border-black pb-5">
-                <h1 class="text-2xl sm:text-3xl font-black uppercase tracking-tight">Laporan Hasil Sertifikasi</h1>
-                <h2 class="text-xl sm:text-2xl font-bold uppercase mt-2">Juz ${d.juz}</h2>
-                <h3 class="text-lg sm:text-xl mt-1 font-semibold text-gray-700">SDIT Arkan Cendekia</h3>
-                <p class="text-sm mt-2 font-medium">Tahun Ajaran ${d.tahunAjaran} - Semester ${d.semester}</p>
+        <div class="print-container max-w-4xl mx-auto bg-white p-6 sm:p-10 print:p-0 shadow-lg print:shadow-none">
+            <div class="text-center mb-5 sm:mb-8 print:mb-2 border-b-2 border-black pb-3 print:pb-2">
+                <h1 class="text-xl sm:text-2xl print:text-lg font-black uppercase tracking-tight">Laporan Hasil Sertifikasi</h1>
+                <h2 class="text-lg sm:text-xl print:text-base font-bold uppercase mt-1">Juz ${d.juz}</h2>
+                <h3 class="text-base sm:text-lg print:text-sm mt-0.5 font-semibold text-gray-700 print:text-black">SDIT Arkan Cendekia</h3>
+                <p class="text-xs sm:text-sm print:text-[11px] mt-1 font-medium">Tahun Ajaran ${d.tahunAjaran} - Semester ${d.semester}</p>
             </div>
 
-            <div class="mb-8 flex flex-col sm:flex-row justify-between gap-6 text-sm font-medium">
+            <div class="mb-5 sm:mb-6 print:mb-2 flex flex-col sm:flex-row justify-between gap-4 print:gap-2 text-sm print:text-xs font-medium">
                 <div>
-                    <table class="w-auto">
-                        <tr><td class="py-1.5 pr-6 border-none !p-0 text-gray-500 uppercase tracking-widest text-[11px] font-bold">Nama Lengkap</td><td class="border-none !p-0 font-bold text-base">: ${d.nama}</td></tr>
-                        <tr><td class="py-1.5 pr-6 border-none !p-0 text-gray-500 uppercase tracking-widest text-[11px] font-bold">Kelas</td><td class="border-none !p-0 text-base">: ${d.kelas}</td></tr>
+                    <table class="w-auto border-none !p-0">
+                        <tr><td class="py-1 pr-4 border-none !p-0 text-gray-500 print:text-black uppercase tracking-widest text-[10px] font-bold">Nama Lengkap</td><td class="border-none !p-0 font-bold text-sm print:text-xs">: ${d.nama}</td></tr>
+                        <tr><td class="py-1 pr-4 border-none !p-0 text-gray-500 print:text-black uppercase tracking-widest text-[10px] font-bold">Kelas</td><td class="border-none !p-0 font-bold text-sm print:text-xs">: ${d.kelas}</td></tr>
                     </table>
                 </div>
                 <div class="sm:text-right flex flex-col sm:items-end">
-                    <div class="border-2 border-black px-6 py-3 inline-block rounded-xl text-center min-w-[160px] bg-gray-50 print:bg-transparent">
-                        <div class="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1">Keterangan</div>
-                        <div class="font-black text-xl ${textColorKeterangan} print:text-black uppercase tracking-wide">${d.keterangan || 'Belum Dinilai'}</div>
+                    <div class="border-2 border-black px-4 py-1.5 inline-block rounded-xl text-center min-w-[140px] bg-gray-50 print:bg-transparent">
+                        <div class="text-[9px] print:text-[8.5px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">Keterangan</div>
+                        <div class="font-black text-lg print:text-base ${textColorKeterangan} print:text-black uppercase tracking-wide">${d.keterangan || 'Belum Dinilai'}</div>
                     </div>
                 </div>
             </div>
 
-            <div class="overflow-x-auto hide-scrollbar">
-                <table class="w-full mb-8 border-collapse border-2 border-black min-w-[300px]">
-                    <thead>
-                        <tr class="bg-gray-100 print:bg-gray-200">
-                            <th class="border-2 border-black px-3 sm:px-4 py-3 text-center w-12 text-[11px] uppercase tracking-widest">No</th>
-                            <th class="border-2 border-black px-4 py-3 text-center text-[11px] uppercase tracking-widest">Nama Surat</th>
-                            <th class="border-2 border-black px-4 py-3 text-center w-28 text-[11px] uppercase tracking-widest">Nilai</th>
-                            <th class="border-2 border-black px-4 py-3 text-center text-[11px] uppercase tracking-widest">Catatan / Evaluasi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${rows}
-                    </tbody>
-                    <tfoot>
-                        <tr class="bg-gray-50 print:bg-gray-100">
-                            <th colspan="2" class="border-2 border-black px-4 py-4 text-right uppercase font-bold text-xs tracking-widest">Rata-Rata Nilai Akhir</th>
-                            <th class="border-2 border-black px-4 py-4 text-center text-xl font-black">${d.rataRata}</th>
-                            <th class="border-2 border-black px-4 py-4"></th>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
+            ${tableLayoutHtml}
 
             ${d.catatan ? `
-            <div class="mb-10 text-sm border-2 border-black p-5 rounded-xl bg-gray-50 print:bg-transparent relative">
-                <div class="absolute -top-3 left-4 bg-white px-2 font-bold uppercase tracking-widest text-[10px] flex items-center gap-1">
+            <div class="mb-4 print:mb-2 text-xs border-2 border-black p-3 print:p-2 rounded-xl bg-gray-50 print:bg-transparent relative print-avoid-break">
+                <div class="absolute -top-2.5 left-3 bg-white px-1.5 font-bold uppercase tracking-widest text-[9px] flex items-center gap-1">
                    Catatan Penguji
                 </div>
-                <p class="whitespace-pre-wrap font-medium">${d.catatan}</p>
+                <p class="whitespace-pre-wrap font-medium print:text-[10px]">${d.catatan}</p>
             </div>` : ''}
 
-            <div class="mt-12 flex justify-end text-sm">
-                <div class="text-center w-56">
-                    <p class="font-medium">Bekasi, ${new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                    <p class="mb-24 mt-1 font-semibold text-gray-600">Penguji / Guru Tahfiz</p>
-                    <p class="font-bold underline text-base">( ${d.penguji || state.namaPenguji || '........................................'} )</p>
+            <div class="mt-6 print:mt-3 flex justify-end text-sm print:text-xs print-avoid-break">
+                <div class="text-center w-52 sm:w-56">
+                    <p class="font-medium print:text-[11px]">Bekasi, ${new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                    <p class="mb-14 print:mb-8 mt-0.5 font-semibold text-gray-600 print:text-black print:text-[10px]">Penguji / Guru Tahfiz</p>
+                    <p class="font-bold underline text-sm print:text-xs">( ${d.penguji || state.namaPenguji || '........................................'} )</p>
                 </div>
             </div>
         </div>
@@ -204,21 +258,21 @@ function exportExcelSemua() {
 
 function viewCetakSemua() {
     if (!state.filterCetak) {
-        if (state.db.length > 0) {
-            const dataTerakhir = state.db[state.db.length - 1];
+        if (state.filterLaporan && state.filterLaporan.tahunAjaran) {
             state.filterCetak = {
-                tahunAjaran: dataTerakhir.tahunAjaran || tahunAjaranList[0],
-                semester: dataTerakhir.semester || '1'
+                tahunAjaran: state.filterLaporan.tahunAjaran === 'semua' ? tahunAjaranList[0] : state.filterLaporan.tahunAjaran,
+                semester: state.filterLaporan.semester === 'semua' ? '1' : state.filterLaporan.semester
             };
         } else {
-            state.filterCetak = { tahunAjaran: tahunAjaranList[0], semester: '1' };
+            const period = getCurrentPeriod();
+            state.filterCetak = { tahunAjaran: period.tahunAjaran, semester: period.semester };
         }
     }
 
     const { tahunAjaran, semester } = state.filterCetak;
     let filteredDb = state.db.filter(d => d.tahunAjaran === tahunAjaran && d.semester === semester);
 
-    if (state.sortLaporan === 'nama_az') filteredDb.sort((a, b) => String(a.nama || '').localeCompare(String(a.nama || '')));
+    if (state.sortLaporan === 'nama_az') filteredDb.sort((a, b) => String(a.nama || '').localeCompare(String(b.nama || '')));
     else if (state.sortLaporan === 'nama_za') filteredDb.sort((a, b) => String(b.nama || '').localeCompare(String(a.nama || '')));
     else if (state.sortLaporan === 'kelas') filteredDb.sort((a, b) => String(a.kelas || '').localeCompare(String(b.kelas || ''), undefined, {numeric: true}));
     else if (state.sortLaporan === 'nilai_tinggi') filteredDb.sort((a, b) => (b.rataRata || 0) - (a.rataRata || 0));
@@ -228,22 +282,28 @@ function viewCetakSemua() {
         const cat = getCatatanGabungan(d);
         return `
         <tr>
-            <td class="border border-black px-3 py-3 text-center w-12">${index + 1}</td>
-            <td class="border border-black px-4 py-3 font-semibold">${d.nama}</td>
-            <td class="border border-black px-3 py-3 text-center">${d.kelas}</td>
-            <td class="border border-black px-3 py-3 text-center">Juz ${d.juz}</td>
-            <td class="border border-black px-3 py-3 text-center font-black">${d.rataRata}</td>
-            <td class="border border-black px-4 py-3 text-xs text-gray-700 print:text-black">${cat || '-'}</td>
-            <td class="border border-black px-3 py-3 text-center font-bold ${d.keterangan === 'Lulus' ? 'text-green-700' : d.keterangan === 'Remedial' ? 'text-amber-600' : 'text-red-600'} print:text-black">${d.keterangan || 'Belum Dinilai'}</td>
+            <td class="border border-black px-2 py-2 print:py-1 text-center w-10 text-xs">${index + 1}</td>
+            <td class="border border-black px-3 py-2 print:py-1 font-semibold text-xs">${d.nama}</td>
+            <td class="border border-black px-2 py-2 print:py-1 text-center text-xs">${d.kelas}</td>
+            <td class="border border-black px-2 py-2 print:py-1 text-center text-xs">Juz ${d.juz}</td>
+            <td class="border border-black px-2 py-2 print:py-1 text-center font-black text-xs">${d.rataRata}</td>
+            <td class="border border-black px-3 py-2 print:py-1 text-xs text-gray-700 print:text-black">${cat || '-'}</td>
+            <td class="border border-black px-2 py-2 print:py-1 text-center font-bold text-xs ${d.keterangan === 'Lulus' ? 'text-green-700' : d.keterangan === 'Remedial' ? 'text-amber-600' : 'text-red-600'} print:text-black">${d.keterangan || 'Belum Dinilai'}</td>
         </tr>
     `;
     }).join('');
 
-    if(filteredDb.length === 0) trs = `<tr><td colspan="7" class="border border-black px-4 py-10 text-center text-gray-500 font-medium italic">Belum ada data sertifikasi untuk periode ini.</td></tr>`;
+    if(filteredDb.length === 0) trs = `<tr><td colspan="7" class="border border-black px-4 py-8 text-center text-gray-500 font-medium italic text-xs">Belum ada data sertifikasi untuk periode ini.</td></tr>`;
 
     let optionsTahun = tahunAjaranList.map(t => `<option value="${t}" ${tahunAjaran === t ? 'selected' : ''}>${t}</option>`).join('');
 
     return `
+        <style>
+            @page {
+                size: landscape;
+                margin: 7mm 9mm;
+            }
+        </style>
         <div class="no-print bg-gray-900 sticky top-0 z-50 shadow-lg pt-[env(safe-area-inset-top)]">
             <div class="p-3 sm:p-5 flex flex-col md:flex-row justify-between items-start md:items-center text-white gap-4">
                 <button onclick="navigate('laporan'); state.filterCetak = null;" class="w-full md:w-auto px-4 py-2.5 bg-gray-800 hover:bg-gray-700 rounded-xl text-sm font-bold transition border border-gray-700 flex items-center justify-center gap-2">
@@ -272,24 +332,24 @@ function viewCetakSemua() {
             </div>
         </div>
 
-        <div class="print-container max-w-5xl mx-auto bg-white p-6 sm:p-12 min-h-screen shadow-lg">
-            <div class="text-center mb-8 sm:mb-10 border-b-2 border-black pb-5">
-                <h1 class="text-2xl sm:text-3xl font-black uppercase tracking-tight">Rekapitulasi Hasil Sertifikasi</h1>
-                <h2 class="text-xl sm:text-2xl font-bold uppercase mt-2 text-gray-700">SDIT Arkan Cendekia</h2>
-                <p class="text-sm mt-3 font-medium bg-gray-100 inline-block px-4 py-1.5 rounded-full print:bg-transparent print:border print:border-black">Tahun Ajaran ${tahunAjaran} - Semester ${semester}</p>
+        <div class="print-container max-w-5xl mx-auto bg-white p-6 sm:p-10 print:p-0 shadow-lg print:shadow-none">
+            <div class="text-center mb-5 sm:mb-8 print:mb-2 border-b-2 border-black pb-3 print:pb-2">
+                <h1 class="text-xl sm:text-2xl print:text-lg font-black uppercase tracking-tight">Rekapitulasi Hasil Sertifikasi</h1>
+                <h2 class="text-base sm:text-lg print:text-sm font-bold uppercase mt-1 text-gray-700 print:text-black">SDIT Arkan Cendekia</h2>
+                <p class="text-xs sm:text-sm mt-1.5 font-medium bg-gray-100 inline-block px-3 py-1 rounded-full print:bg-transparent print:border print:border-black">Tahun Ajaran ${tahunAjaran} - Semester ${semester}</p>
             </div>
 
             <div class="overflow-x-auto hide-scrollbar">
-                <table class="w-full mb-8 border-collapse border-2 border-black min-w-[600px]">
+                <table class="w-full mb-4 print:mb-2 border-collapse border-2 border-black min-w-[600px]">
                     <thead>
                         <tr class="bg-gray-100 print:bg-gray-200">
-                            <th class="border-2 border-black px-4 py-3.5 text-center w-12 text-[11px] font-bold uppercase tracking-widest">No</th>
-                            <th class="border-2 border-black px-4 py-3.5 text-[11px] font-bold uppercase tracking-widest">Nama Lengkap</th>
-                            <th class="border-2 border-black px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-widest">Kelas</th>
-                            <th class="border-2 border-black px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-widest">Juz</th>
-                            <th class="border-2 border-black px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-widest">Nilai</th>
-                            <th class="border-2 border-black px-4 py-3.5 text-[11px] font-bold uppercase tracking-widest">Catatan</th>
-                            <th class="border-2 border-black px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-widest">Keterangan</th>
+                            <th class="border-2 border-black px-2 py-2 print:py-1.5 text-center w-10 text-[10px] font-bold uppercase tracking-widest">No</th>
+                            <th class="border-2 border-black px-3 py-2 print:py-1.5 text-[10px] font-bold uppercase tracking-widest">Nama Lengkap</th>
+                            <th class="border-2 border-black px-2 py-2 print:py-1.5 text-center text-[10px] font-bold uppercase tracking-widest">Kelas</th>
+                            <th class="border-2 border-black px-2 py-2 print:py-1.5 text-center text-[10px] font-bold uppercase tracking-widest">Juz</th>
+                            <th class="border-2 border-black px-2 py-2 print:py-1.5 text-center text-[10px] font-bold uppercase tracking-widest">Nilai</th>
+                            <th class="border-2 border-black px-3 py-2 print:py-1.5 text-[10px] font-bold uppercase tracking-widest">Catatan</th>
+                            <th class="border-2 border-black px-2 py-2 print:py-1.5 text-center text-[10px] font-bold uppercase tracking-widest">Keterangan</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200">
@@ -298,11 +358,11 @@ function viewCetakSemua() {
                 </table>
             </div>
 
-            <div class="mt-12 flex justify-end text-sm">
+            <div class="mt-6 print:mt-3 flex justify-end text-sm print:text-xs print-avoid-break">
                 <div class="text-center w-48 sm:w-56">
-                    <p class="font-medium">Bekasi, ${new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                    <p class="mb-24 mt-1 font-semibold text-gray-600">Koordinator QL</p>
-                    <p class="font-bold underline text-base">( Rifki Ihsanul Hakim, S.Pd )</p>
+                    <p class="font-medium print:text-[11px]">Bekasi, ${new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                    <p class="mb-14 print:mb-8 mt-0.5 font-semibold text-gray-600 print:text-black print:text-[10px]">Koordinator QL</p>
+                    <p class="font-bold underline text-sm print:text-xs">( Rifki Ihsanul Hakim, S.Pd )</p>
                 </div>
             </div>
         </div>

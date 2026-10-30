@@ -13,16 +13,65 @@ body {
 
 /* Print Styles */
 @media print {
-    body { background-color: white; }
+    body { 
+        background-color: white !important; 
+        color: black !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
     .no-print { display: none !important; }
     .print-only { display: block !important; }
-    .print-container { padding: 0; margin: 0; width: 100%; max-width: none !important; }
-    table { border-collapse: collapse; width: 100%; }
-    th, td { border: 1px solid black !important; padding: 8px; text-align: left; font-size: 12px; }
-    th { background-color: #f3f4f6 !important; -webkit-print-color-adjust: exact; }
     
-    /* Paksa Landscape untuk Haflah */
-    @page { size: landscape; margin: 1cm; }
+    .print-container { 
+        padding: 0 !important; 
+        margin: 0 auto !important; 
+        width: 100% !important; 
+        max-width: none !important; 
+        min-height: auto !important;
+        height: auto !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
+
+    table { 
+        border-collapse: collapse !important; 
+        width: 100% !important;
+        page-break-inside: auto;
+        break-inside: auto;
+    }
+
+    thead {
+        display: table-header-group !important;
+    }
+
+    tfoot {
+        display: table-footer-group !important;
+    }
+
+    tr {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    th, td { 
+        border: 1px solid black !important; 
+        padding: 3.5px 6px !important; 
+        text-align: left; 
+        font-size: 11px !important;
+        line-height: 1.25 !important;
+    }
+
+    th { 
+        background-color: #f3f4f6 !important; 
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    .print-avoid-break {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
     .landscape-print { width: 100%; }
 }
 .print-only { display: none; }

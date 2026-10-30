@@ -45,6 +45,8 @@ let state = {
     filterCetak: null, 
     filterPendaftar: null,
     filterHaflah: null, // State untuk menyimpan filter tahun Haflah
+    tabLaporan: 'aktif', // 'aktif' (Sesi Berjalan) atau 'arsip' (Arsip Nilai Sesi Sebelumnya)
+    filterLaporan: null, // Filter khusus untuk sesi arsip { tahunAjaran, semester }
     namaPenguji: null,
     username: null,
     sortLaporan: 'terbaru',

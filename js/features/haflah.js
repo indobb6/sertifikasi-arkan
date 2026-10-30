@@ -81,6 +81,12 @@ function viewHaflah() {
     }
 
     return `
+        <style>
+            @page {
+                size: landscape;
+                margin: 7mm 9mm;
+            }
+        </style>
         <div class="no-print p-3 sm:p-5 bg-gray-900 flex flex-col md:flex-row justify-between items-start md:items-center text-white sticky top-0 z-50 shadow-lg gap-4 pt-[env(safe-area-inset-top)]">
             <button onclick="navigate('dashboard')" class="w-full md:w-auto px-4 py-2.5 bg-gray-800 hover:bg-gray-700 rounded-xl text-sm font-bold transition border border-gray-700 flex items-center justify-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg> Dashboard
