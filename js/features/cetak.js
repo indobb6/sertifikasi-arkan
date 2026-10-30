@@ -55,84 +55,40 @@ function viewCetak() {
         const isRemedial = d.keterangan === 'Remedial' && nilai < 78;
         return `
             <tr class="${isRemedial ? 'bg-amber-50 print:bg-transparent' : ''}">
-                <td class="border border-black px-1.5 sm:px-2 py-1 sm:py-1.5 print:py-0.5 print:px-1.5 text-center w-8 text-xs print:text-[10px]">${index + 1}</td>
-                <td class="border border-black px-2 sm:px-3 py-1 sm:py-1.5 print:py-0.5 print:px-2 text-xs print:text-[10px] ${isRemedial ? 'font-bold text-amber-700 print:text-black' : ''}">
+                <td class="border border-black px-2 sm:px-4 py-1.5 print:py-1 text-center w-10 sm:w-12 text-xs print:text-[11px]">${index + 1}</td>
+                <td class="border border-black px-3 sm:px-4 py-1.5 print:py-1 text-xs print:text-[11px] ${isRemedial ? 'font-bold text-amber-700 print:text-black' : ''}">
                     ${surah} ${isRemedial ? '<span class="text-[9px] ml-1 no-print text-amber-600">(Rem)</span>' : ''}
                 </td>
-                <td class="border border-black px-1.5 sm:px-2 py-1 sm:py-1.5 print:py-0.5 print:px-1.5 text-center w-14 sm:w-16 print:w-12 font-bold text-xs print:text-[10px] ${isRemedial ? 'text-red-600 print:text-black' : ''}">${nilai}</td>
-                <td class="border border-black px-2 py-1 sm:py-1.5 print:py-0.5 print:px-2 text-[11px] print:text-[9.5px] text-gray-700 print:text-black">${note ? note : '<span class="text-gray-400 print:text-gray-500 italic">-</span>'}</td>
+                <td class="border border-black px-2 sm:px-4 py-1.5 print:py-1 text-center w-16 sm:w-20 font-bold text-xs print:text-[11px] ${isRemedial ? 'text-red-600 print:text-black' : ''}">${nilai}</td>
+                <td class="border border-black px-3 py-1.5 print:py-1 text-xs print:text-[11px] text-gray-700 print:text-black">${note ? note : '<span class="text-gray-400 print:text-gray-500 italic">-</span>'}</td>
             </tr>
         `;
     };
 
-    const isMultiColumn = listSurah.length > 18;
-    let tableLayoutHtml = '';
-
-    if (isMultiColumn) {
-        const mid = Math.ceil(listSurah.length / 2);
-        const col1 = listSurah.slice(0, mid);
-        const col2 = listSurah.slice(mid);
-
-        tableLayoutHtml = `
-            <div class="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-2.5 mb-3 print:mb-2">
-                <table class="w-full border-collapse border-2 border-black">
-                    <thead>
-                        <tr class="bg-gray-100 print:bg-gray-200">
-                            <th class="border-2 border-black px-1.5 py-1 text-center w-8 text-[10px] uppercase font-bold">No</th>
-                            <th class="border-2 border-black px-2 py-1 text-center text-[10px] uppercase font-bold">Nama Surat</th>
-                            <th class="border-2 border-black px-1.5 py-1 text-center w-12 text-[10px] uppercase font-bold">Nilai</th>
-                            <th class="border-2 border-black px-2 py-1 text-center text-[10px] uppercase font-bold">Catatan</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${col1.map((s, idx) => renderSurahRow(s, idx)).join('')}
-                    </tbody>
-                </table>
-                <table class="w-full border-collapse border-2 border-black">
-                    <thead>
-                        <tr class="bg-gray-100 print:bg-gray-200">
-                            <th class="border-2 border-black px-1.5 py-1 text-center w-8 text-[10px] uppercase font-bold">No</th>
-                            <th class="border-2 border-black px-2 py-1 text-center text-[10px] uppercase font-bold">Nama Surat</th>
-                            <th class="border-2 border-black px-1.5 py-1 text-center w-12 text-[10px] uppercase font-bold">Nilai</th>
-                            <th class="border-2 border-black px-2 py-1 text-center text-[10px] uppercase font-bold">Catatan</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${col2.map((s, idx) => renderSurahRow(s, mid + idx)).join('')}
-                    </tbody>
-                </table>
-            </div>
-            <div class="flex justify-between items-center bg-gray-50 print:bg-gray-100 border-2 border-black px-4 py-2 print:py-1 mb-3 print:mb-2 rounded-lg">
-                <span class="uppercase font-bold text-xs print:text-[11px] tracking-wider">Rata-Rata Nilai Akhir</span>
-                <span class="text-xl print:text-lg font-black">${d.rataRata}</span>
-            </div>
-        `;
-    } else {
-        tableLayoutHtml = `
-            <div class="overflow-x-auto hide-scrollbar mb-4 print:mb-2">
-                <table class="w-full border-collapse border-2 border-black">
-                    <thead>
-                        <tr class="bg-gray-100 print:bg-gray-200">
-                            <th class="border-2 border-black px-2 py-1.5 text-center w-10 text-[10px] uppercase font-bold">No</th>
-                            <th class="border-2 border-black px-3 py-1.5 text-center text-[10px] uppercase font-bold">Nama Surat</th>
-                            <th class="border-2 border-black px-2 py-1.5 text-center w-20 text-[10px] uppercase font-bold">Nilai</th>
-                            <th class="border-2 border-black px-3 py-1.5 text-center text-[10px] uppercase font-bold">Catatan / Evaluasi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${listSurah.map((s, idx) => renderSurahRow(s, idx)).join('')}
-                    </tbody>
-                    <tfoot>
-                        <tr class="bg-gray-50 print:bg-gray-100">
-                            <th colspan="2" class="border-2 border-black px-3 py-2 print:py-1 text-right uppercase font-bold text-xs print:text-[11px]">Rata-Rata Nilai Akhir</th>
-                            <th class="border-2 border-black px-2 py-2 print:py-1 text-center text-lg font-black">${d.rataRata}</th>
-                            <th class="border-2 border-black px-3 py-2 print:py-1"></th>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-        `;
-    }
+    const tableLayoutHtml = `
+        <div class="overflow-x-auto hide-scrollbar mb-4 print:mb-3">
+            <table class="w-full border-collapse border-2 border-black">
+                <thead>
+                    <tr class="bg-gray-100 print:bg-gray-200">
+                        <th class="border-2 border-black px-2 py-2 print:py-1.5 text-center w-10 text-[11px] print:text-[10px] uppercase font-bold">No</th>
+                        <th class="border-2 border-black px-3 py-2 print:py-1.5 text-center text-[11px] print:text-[10px] uppercase font-bold">Nama Surat</th>
+                        <th class="border-2 border-black px-2 py-2 print:py-1.5 text-center w-20 text-[11px] print:text-[10px] uppercase font-bold">Nilai</th>
+                        <th class="border-2 border-black px-3 py-2 print:py-1.5 text-center text-[11px] print:text-[10px] uppercase font-bold">Catatan / Evaluasi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${listSurah.map((s, idx) => renderSurahRow(s, idx)).join('')}
+                </tbody>
+                <tfoot>
+                    <tr class="bg-gray-50 print:bg-gray-100 print-avoid-break">
+                        <th colspan="2" class="border-2 border-black px-3 py-2 print:py-1.5 text-right uppercase font-bold text-xs print:text-[11px]">Rata-Rata Nilai Akhir</th>
+                        <th class="border-2 border-black px-2 py-2 print:py-1.5 text-center text-lg print:text-base font-black">${d.rataRata}</th>
+                        <th class="border-2 border-black px-3 py-2 print:py-1.5"></th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    `;
 
     let textColorKeterangan = d.keterangan === 'Lulus' ? 'text-green-700' : d.keterangan === 'Remedial' ? 'text-amber-600' : d.keterangan === 'Belum Lulus' ? 'text-red-600' : 'text-gray-800';
 
@@ -169,12 +125,16 @@ function viewCetak() {
                 <p class="text-xs sm:text-sm print:text-[11px] mt-1 font-medium">Tahun Ajaran ${d.tahunAjaran} - Semester ${d.semester}</p>
             </div>
 
-            <div class="mb-5 sm:mb-6 print:mb-2 flex flex-col sm:flex-row justify-between gap-4 print:gap-2 text-sm print:text-xs font-medium">
-                <div>
-                    <table class="w-auto border-none !p-0">
-                        <tr><td class="py-1 pr-4 border-none !p-0 text-gray-500 print:text-black uppercase tracking-widest text-[10px] font-bold">Nama Lengkap</td><td class="border-none !p-0 font-bold text-sm print:text-xs">: ${d.nama}</td></tr>
-                        <tr><td class="py-1 pr-4 border-none !p-0 text-gray-500 print:text-black uppercase tracking-widest text-[10px] font-bold">Kelas</td><td class="border-none !p-0 font-bold text-sm print:text-xs">: ${d.kelas}</td></tr>
-                    </table>
+            <div class="mb-5 sm:mb-6 print:mb-3 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 text-sm print:text-xs">
+                <div class="space-y-1.5 print:space-y-1">
+                    <div class="flex items-baseline gap-2">
+                        <span class="w-28 text-gray-600 print:text-black uppercase tracking-wider text-[11px] print:text-[10px] font-bold">Nama Lengkap</span>
+                        <span class="font-bold text-base print:text-sm text-gray-900 print:text-black">: ${d.nama}</span>
+                    </div>
+                    <div class="flex items-baseline gap-2">
+                        <span class="w-28 text-gray-600 print:text-black uppercase tracking-wider text-[11px] print:text-[10px] font-bold">Kelas</span>
+                        <span class="font-bold text-base print:text-sm text-gray-900 print:text-black">: ${d.kelas}</span>
+                    </div>
                 </div>
                 <div class="sm:text-right flex flex-col sm:items-end">
                     <div class="border-2 border-black px-4 py-1.5 inline-block rounded-xl text-center min-w-[140px] bg-gray-50 print:bg-transparent">
